@@ -49,16 +49,19 @@ variable "eks_nodegroup_role_arn" {
 variable "ebs_csi_driver_role_arn" {
   description = "IAM role ARN for EBS CSI driver"
   type        = string
+  default     = null
 }
 
 variable "cluster_autoscaler_role_arn" {
   description = "IAM role ARN for cluster autoscaler"
   type        = string
+  default     = null
 }
 
 variable "aws_load_balancer_controller_role_arn" {
   description = "IAM role ARN for AWS Load Balancer Controller"
   type        = string
+  default     = null
 }
 
 variable "node_groups" {

@@ -98,9 +98,11 @@ module "eks" {
   
   eks_cluster_role_arn               = module.iam.eks_cluster_role_arn
   eks_nodegroup_role_arn            = module.iam.eks_nodegroup_role_arn
-  ebs_csi_driver_role_arn           = module.iam_service_accounts.ebs_csi_driver_role_arn
-  cluster_autoscaler_role_arn       = module.iam_service_accounts.cluster_autoscaler_role_arn
-  aws_load_balancer_controller_role_arn = module.iam_service_accounts.aws_load_balancer_controller_role_arn
+  
+  # Service account roles are not provided initially to avoid cycle
+  # ebs_csi_driver_role_arn           = module.iam_service_accounts.ebs_csi_driver_role_arn
+  # cluster_autoscaler_role_arn       = module.iam_service_accounts.cluster_autoscaler_role_arn
+  # aws_load_balancer_controller_role_arn = module.iam_service_accounts.aws_load_balancer_controller_role_arn
   
   node_groups                       = local.tier_node_groups
   ec2_ssh_key                      = var.ec2_ssh_key
@@ -116,6 +118,29 @@ module "eks" {
     ServiceTier = var.service_tier
     EstimatedMonthlyCost = local.estimated_cost
   }
+}
+
+module "eks_addons" {
+  source = "../../../../modules/eks-addons"
+
+  cluster_name    = local.cluster_name
+  cluster_version = local.current_tier.eks.cluster_version
+  region          = var.region
+  environment     = var.environment
+  project_name    = var.project_name
+  vpc_id          = data.terraform_remote_state.networking.outputs.vpc_id
+
+  ebs_csi_driver_role_arn           = module.iam_service_accounts.ebs_csi_driver_role_arn
+  cluster_autoscaler_role_arn       = module.iam_service_accounts.cluster_autoscaler_role_arn
+  aws_load_balancer_controller_role_arn = module.iam_service_accounts.aws_load_balancer_controller_role_arn
+
+  tags = {
+    Owner = "Platform Team"
+    ServiceTier = var.service_tier
+    EstimatedMonthlyCost = local.estimated_cost
+  }
+
+  depends_on = [module.eks, module.iam_service_accounts]
 }
 
 module "rds" {
