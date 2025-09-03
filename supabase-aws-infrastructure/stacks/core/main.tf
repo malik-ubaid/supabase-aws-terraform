@@ -120,19 +120,100 @@ module "eks" {
   }
 }
 
-module "eks_addons" {
-  source = "../../../../modules/eks-addons"
+# Temporarily disabled due to count argument issues
+# Will be re-enabled after core infrastructure is deployed
+# module "eks_addons" {
+#   source = "../../../../modules/eks-addons"
+#
+#   cluster_name    = local.cluster_name
+#   cluster_version = local.current_tier.eks.cluster_version
+#   region          = var.region
+#   environment     = var.environment
+#   project_name    = var.project_name
+#   vpc_id          = data.terraform_remote_state.networking.outputs.vpc_id
+#
+#   ebs_csi_driver_role_arn           = module.iam_service_accounts.ebs_csi_driver_role_arn
+#   cluster_autoscaler_role_arn       = module.iam_service_accounts.cluster_autoscaler_role_arn
+#   aws_load_balancer_controller_role_arn = module.iam_service_accounts.aws_load_balancer_controller_role_arn
+#
+#   tags = {
+#     Owner = "Platform Team"
+#     ServiceTier = var.service_tier
+#     EstimatedMonthlyCost = local.estimated_cost
+#   }
+#
+#   depends_on = [module.eks, module.iam_service_accounts]
+# }
 
-  cluster_name    = local.cluster_name
-  cluster_version = local.current_tier.eks.cluster_version
-  region          = var.region
-  environment     = var.environment
-  project_name    = var.project_name
-  vpc_id          = data.terraform_remote_state.networking.outputs.vpc_id
+# Fargate Profile for serverless compute
+resource "aws_iam_role" "fargate_pod_execution_role" {
+  name = "${var.project_name}-${var.environment}-fargate-pod-execution-role"
 
-  ebs_csi_driver_role_arn           = module.iam_service_accounts.ebs_csi_driver_role_arn
-  cluster_autoscaler_role_arn       = module.iam_service_accounts.cluster_autoscaler_role_arn
-  aws_load_balancer_controller_role_arn = module.iam_service_accounts.aws_load_balancer_controller_role_arn
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "eks-fargate-pods.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Owner = "Platform Team"
+    ServiceTier = var.service_tier
+    EstimatedMonthlyCost = local.estimated_cost
+  }
+}
+
+resource "aws_iam_role_policy" "fargate_pod_execution_role_policy" {
+  name = "${var.project_name}-${var.environment}-fargate-pod-execution-policy"
+  role = aws_iam_role.fargate_pod_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_eks_fargate_profile" "supabase" {
+  cluster_name           = module.eks.cluster_name
+  fargate_profile_name   = "supabase-fargate"
+  pod_execution_role_arn = aws_iam_role.fargate_pod_execution_role.arn
+
+  subnet_ids = data.terraform_remote_state.networking.outputs.eks_private_subnet_ids
+
+  selector {
+    namespace = "supabase"
+  }
+
+  selector {
+    namespace = "external-secrets"
+  }
+
+  selector {
+    namespace = "kube-system"
+    labels = {
+      "k8s-app" = "aws-load-balancer-controller"
+    }
+  }
 
   tags = {
     Owner = "Platform Team"
@@ -140,7 +221,7 @@ module "eks_addons" {
     EstimatedMonthlyCost = local.estimated_cost
   }
 
-  depends_on = [module.eks, module.iam_service_accounts]
+  depends_on = [aws_iam_role_policy.fargate_pod_execution_role_policy]
 }
 
 module "rds" {
@@ -162,9 +243,9 @@ module "rds" {
   
   allocated_storage     = local.current_tier.rds.allocated_storage
   max_allocated_storage = local.current_tier.rds.max_allocated_storage
-  storage_type         = local.current_tier.rds.instance_class == "db.t3.micro" ? "gp2" : "gp3"
-  storage_iops         = local.current_tier.rds.instance_class == "db.t3.micro" ? null : 3000
-  storage_throughput   = local.current_tier.rds.instance_class == "db.t3.micro" ? null : 125
+  storage_type         = try(local.current_tier.rds.storage_type, "gp2")
+  storage_iops         = local.current_tier.rds.allocated_storage < 400 ? null : try(local.current_tier.rds.storage_iops, null)
+  storage_throughput   = local.current_tier.rds.allocated_storage < 400 ? null : try(local.current_tier.rds.storage_throughput, null)
   
   multi_az                = local.current_tier.rds.multi_az
   backup_retention_period = local.current_tier.rds.backup_retention_period
@@ -174,6 +255,7 @@ module "rds" {
   monitoring_interval         = local.current_tier.rds.monitoring_interval
   
   storage_encrypted = true
+  skip_final_snapshot = true
 
   tags = {
     Owner = "Platform Team"

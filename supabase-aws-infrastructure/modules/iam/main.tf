@@ -101,7 +101,7 @@ resource "aws_iam_role_policy_attachment" "eks_ssm_policy" {
 }
 
 resource "aws_iam_role" "ebs_csi_driver" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-ebs-csi-driver-role"
 
   assume_role_policy = jsonencode({
@@ -129,13 +129,13 @@ resource "aws_iam_role" "ebs_csi_driver" {
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver_policy" {
-  count      = var.create_service_account_roles ? 1 : 0
+  count      = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
   role       = aws_iam_role.ebs_csi_driver[0].name
 }
 
 resource "aws_iam_role" "cluster_autoscaler" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-cluster-autoscaler-role"
 
   assume_role_policy = jsonencode({
@@ -163,7 +163,7 @@ resource "aws_iam_role" "cluster_autoscaler" {
 }
 
 resource "aws_iam_role_policy" "cluster_autoscaler" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-cluster-autoscaler-policy"
   role = aws_iam_role.cluster_autoscaler[0].id
 
@@ -191,7 +191,7 @@ resource "aws_iam_role_policy" "cluster_autoscaler" {
 }
 
 resource "aws_iam_role" "aws_load_balancer_controller" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-aws-load-balancer-controller-role"
 
   assume_role_policy = jsonencode({
@@ -405,13 +405,13 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
 }
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
-  count      = var.create_service_account_roles ? 1 : 0
+  count      = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   policy_arn = aws_iam_policy.aws_load_balancer_controller[0].arn
   role       = aws_iam_role.aws_load_balancer_controller[0].name
 }
 
 resource "aws_iam_role" "external_secrets" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-external-secrets-role"
 
   assume_role_policy = jsonencode({
@@ -439,7 +439,7 @@ resource "aws_iam_role" "external_secrets" {
 }
 
 resource "aws_iam_policy" "external_secrets" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-external-secrets-policy"
 
   policy = jsonencode({
@@ -451,7 +451,7 @@ resource "aws_iam_policy" "external_secrets" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
-        Resource = var.secrets_manager_arns
+        Resource = length(var.secrets_manager_arns) > 0 ? var.secrets_manager_arns : ["*"]
       },
       {
         Effect = "Allow"
@@ -471,13 +471,13 @@ resource "aws_iam_policy" "external_secrets" {
 }
 
 resource "aws_iam_role_policy_attachment" "external_secrets" {
-  count      = var.create_service_account_roles ? 1 : 0
+  count      = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   policy_arn = aws_iam_policy.external_secrets[0].arn
   role       = aws_iam_role.external_secrets[0].name
 }
 
 resource "aws_iam_role" "supabase_storage" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-storage-role"
 
   assume_role_policy = jsonencode({
@@ -505,7 +505,7 @@ resource "aws_iam_role" "supabase_storage" {
 }
 
 resource "aws_iam_policy" "supabase_storage" {
-  count = var.create_service_account_roles ? 1 : 0
+  count = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   name = "${var.project_name}-${var.environment}-storage-policy"
 
   policy = jsonencode({
@@ -520,7 +520,7 @@ resource "aws_iam_policy" "supabase_storage" {
           "s3:GetObjectVersion",
           "s3:DeleteObjectVersion"
         ]
-        Resource = "${var.s3_bucket_arn}/*"
+        Resource = var.s3_bucket_arn != "" ? ["${var.s3_bucket_arn}/*"] : ["*"]
       },
       {
         Effect = "Allow"
@@ -530,7 +530,7 @@ resource "aws_iam_policy" "supabase_storage" {
           "s3:ListBucketMultipartUploads",
           "s3:ListBucketVersions"
         ]
-        Resource = var.s3_bucket_arn
+        Resource = var.s3_bucket_arn != "" ? [var.s3_bucket_arn] : ["*"]
       }
     ]
   })
@@ -539,7 +539,7 @@ resource "aws_iam_policy" "supabase_storage" {
 }
 
 resource "aws_iam_role_policy_attachment" "supabase_storage" {
-  count      = var.create_service_account_roles ? 1 : 0
+  count      = var.create_service_account_roles && var.oidc_provider_arn != "" ? 1 : 0
   policy_arn = aws_iam_policy.supabase_storage[0].arn
   role       = aws_iam_role.supabase_storage[0].name
 }

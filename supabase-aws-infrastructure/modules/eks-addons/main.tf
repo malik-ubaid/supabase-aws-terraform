@@ -55,35 +55,24 @@ resource "helm_release" "cluster_autoscaler" {
   version    = "9.37.0"
   namespace  = "kube-system"
 
-  set {
-    name  = "autoDiscovery.clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "awsRegion"
-    value = var.region
-  }
-
-  set {
-    name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.cluster_autoscaler_role_arn
-  }
-
-  set {
-    name  = "rbac.serviceAccount.name"
-    value = "cluster-autoscaler"
-  }
-
-  set {
-    name  = "extraArgs.scale-down-delay-after-add"
-    value = "10m"
-  }
-
-  set {
-    name  = "extraArgs.scale-down-unneeded-time"
-    value = "10m"
-  }
+  values = [yamlencode({
+    autoDiscovery = {
+      clusterName = var.cluster_name
+    }
+    awsRegion = var.region
+    rbac = {
+      serviceAccount = {
+        annotations = {
+          "eks.amazonaws.com/role-arn" = var.cluster_autoscaler_role_arn
+        }
+        name = "cluster-autoscaler"
+      }
+    }
+    extraArgs = {
+      "scale-down-delay-after-add"  = "10m"
+      "scale-down-unneeded-time"    = "10m"
+    }
+  })]
 }
 
 resource "helm_release" "aws_load_balancer_controller" {
@@ -94,33 +83,16 @@ resource "helm_release" "aws_load_balancer_controller" {
   version    = "1.8.1"
   namespace  = "kube-system"
 
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
-  }
-
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.aws_load_balancer_controller_role_arn
-  }
-
-  set {
-    name  = "region"
-    value = var.region
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
-  }
+  values = [yamlencode({
+    clusterName = var.cluster_name
+    serviceAccount = {
+      create = true
+      name   = "aws-load-balancer-controller"
+      annotations = {
+        "eks.amazonaws.com/role-arn" = var.aws_load_balancer_controller_role_arn
+      }
+    }
+    region = var.region
+    vpcId  = var.vpc_id
+  })]
 }

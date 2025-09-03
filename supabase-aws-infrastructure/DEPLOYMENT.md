@@ -1,52 +1,84 @@
 # Supabase on AWS - Deployment Guide
 
-This guide provides step-by-step instructions for deploying Supabase on AWS using Terraform and Kubernetes.
+This guide provides step-by-step instructions for deploying the complete Supabase infrastructure on AWS using Terraform modules and Kubernetes with Helm.
+
+## 🎯 What You'll Deploy
+
+This deployment creates a production-ready Supabase environment with:
+- **EKS Cluster** (v1.30) with auto-scaling node groups
+- **RDS PostgreSQL** (15.8) with automated backups
+- **S3 Storage** with encryption and versioning
+- **Secrets Management** via AWS Secrets Manager
+- **Service Mesh** with Kong API Gateway
+- **Auto-scaling** for all Supabase services (HPA)
+- **Security** with VPC isolation and pod security policies
 
 ## 📋 Prerequisites
 
 ### Required Tools
 
-Ensure you have the following tools installed:
+Ensure you have the following tools installed with minimum versions:
 
 ```bash
-# Terraform (>= 1.12)
+# Terraform (>= 1.12) - Infrastructure as Code
 terraform --version
 
-# AWS CLI (>= 2.0)
+# AWS CLI (>= 2.0) - AWS service management
 aws --version
 
-# kubectl (>= 1.28)
+# kubectl (>= 1.28) - Kubernetes cluster management
 kubectl version --client
 
-# Helm (>= 3.12)
+# Helm (>= 3.12) - Kubernetes package management
 helm version
+```
+
+### Installation Quick Reference
+```bash
+# macOS with Homebrew
+brew install terraform awscli kubectl helm
+
+# Ubuntu/Debian
+sudo apt-get update && sudo apt-get install -y terraform awscli kubectl helm
+
+# Verify installations
+terraform --version && aws --version && kubectl version --client && helm version
 ```
 
 ### AWS Prerequisites
 
-1. **AWS Account**: Active AWS account with appropriate permissions
-2. **AWS Credentials**: Configure AWS CLI with credentials
-3. **S3 Backend Bucket**: Create S3 bucket for Terraform state
+1. **AWS Account**: Active AWS account with billing enabled
+2. **AWS Credentials**: Programmatic access configured
+3. **IAM Permissions**: Administrative access or specific permissions listed below
+4. **S3 Backend Bucket**: Secure bucket for Terraform state storage
 
 ```bash
-# Configure AWS credentials
+# Step 1: Configure AWS credentials
 aws configure
+# Enter your AWS Access Key ID, Secret Access Key, region (eu-west-1), and output format (json)
 
-# Verify access
+# Step 2: Verify access and check identity
 aws sts get-caller-identity
+# Should return your account ID, user ID, and ARN
 
-# Create S3 bucket for Terraform state (adjust bucket name)
-aws s3 mb s3://terraform-backend-state-supabase-bucket --region eu-west-1
-aws s3api put-bucket-versioning --bucket terraform-backend-state-supabase-bucket --versioning-configuration Status=Enabled
-aws s3api put-bucket-encryption --bucket terraform-backend-state-supabase-bucket --server-side-encryption-configuration '{
-  "Rules": [
-    {
-      "ApplyServerSideEncryptionByDefault": {
-        "SSEAlgorithm": "AES256"
-      }
+# Step 3: Create S3 bucket for Terraform state (replace with unique name)
+export BUCKET_NAME="terraform-state-supabase-$(date +%s)"
+aws s3 mb s3://$BUCKET_NAME --region eu-west-1
+
+# Step 4: Enable versioning and encryption
+aws s3api put-bucket-versioning --bucket $BUCKET_NAME --versioning-configuration Status=Enabled
+aws s3api put-bucket-encryption --bucket $BUCKET_NAME --server-side-encryption-configuration '{
+  "Rules": [{
+    "ApplyServerSideEncryptionByDefault": {
+      "SSEAlgorithm": "AES256"
     }
-  ]
+  }]
 }'
+
+# Step 5: Block public access
+aws s3api put-public-access-block --bucket $BUCKET_NAME --public-access-block-configuration 'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'
+
+echo "S3 Backend Bucket: $BUCKET_NAME"
 ```
 
 ### IAM Permissions
@@ -77,105 +109,273 @@ cd supabase-aws-infrastructure
 
 ## 1. Deploy Networking Infrastructure
 
+### Configure Terraform Backend
+First, update the backend configuration with your S3 bucket:
+
 ```bash
+# Navigate to networking directory
 cd environments/ireland/development/networking
 
-# Initialize Terraform
+# Update backend configuration (replace with your bucket name)
+cat > backend.tf << EOF
+terraform {
+  backend "s3" {
+    bucket = "$BUCKET_NAME"
+    key    = "supabase/networking/terraform.tfstate"
+    region = "eu-west-1"
+  }
+}
+EOF
+```
+
+### Deploy Network Resources
+```bash
+# Initialize Terraform (downloads providers and sets up backend)
 terraform init
 
-# Review the plan
+# Review planned changes
 terraform plan -out=networking.tfplan
 
-# Apply changes
+# Deploy networking infrastructure
 terraform apply networking.tfplan
 ```
 
-**Expected Resources Created:**
-- VPC with DNS support
-- Public subnets (3 AZs)
-- EKS private subnets (3 AZs) 
-- RDS private subnets (3 AZs)
-- Internet Gateway
-- NAT Gateway
-- Route tables and associations
-- VPC endpoints for AWS services
-- Security groups
-- VPC Flow Logs
+**Expected Resources Created (~5-10 minutes):**
+- ✅ **VPC** with DNS resolution and hostnames enabled
+- ✅ **Public Subnets** (3 AZs) - 10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24
+- ✅ **EKS Private Subnets** (3 AZs) - 10.0.10.0/24, 10.0.11.0/24, 10.0.12.0/24
+- ✅ **RDS Private Subnets** (3 AZs) - 10.0.20.0/24, 10.0.21.0/24, 10.0.22.0/24
+- ✅ **Internet Gateway** for public internet access
+- ✅ **NAT Gateways** (3) for private subnet outbound access
+- ✅ **Route Tables** with proper associations
+- ✅ **VPC Endpoints** for S3 and Secrets Manager (cost optimization)
+- ✅ **Security Groups** with minimal required access
+- ✅ **VPC Flow Logs** for network monitoring
+- ✅ **DB Subnet Group** for RDS deployment
+
+**Cost Impact**: ~$45-60/month (primarily NAT Gateways)
 
 ## 2. Deploy Core Infrastructure
+
+### Configure Service Tier
+The deployment uses a service tier system for cost and resource management:
 
 ```bash
 cd ../core
 
+# Review current service tier (should be 'small' for development)
+cat terraform.tfvars
+
+# Optional: Change to minimal tier for cost savings
+# echo 'service_tier = "minimal"' >> terraform.tfvars
+```
+
+### Configure Backend and Deploy
+```bash
+# Configure Terraform backend
+cat > backend.tf << EOF
+terraform {
+  backend "s3" {
+    bucket = "$BUCKET_NAME"
+    key    = "supabase/core/terraform.tfstate"
+    region = "eu-west-1"
+  }
+}
+EOF
+
 # Initialize Terraform
 terraform init
 
-# Review the plan
+# Review planned changes (this will be substantial)
 terraform plan -out=core.tfplan
 
-# Apply changes
+# Deploy core infrastructure (15-20 minutes)
 terraform apply core.tfplan
 ```
 
-**Expected Resources Created:**
-- EKS cluster with managed node groups
-- RDS PostgreSQL instance (Multi-AZ)
-- S3 bucket for Supabase storage
-- AWS Secrets Manager secrets
-- IAM roles and policies
-- KMS keys for encryption
-- CloudWatch log groups
+**Expected Resources Created (~15-20 minutes):**
+- ✅ **EKS Cluster** (supabase-development-eks) with private API endpoint
+- ✅ **EKS Node Groups** with auto-scaling (t3.medium instances)
+- ✅ **EKS Add-ons** (VPC CNI, CoreDNS, kube-proxy, EBS CSI driver)
+- ✅ **RDS PostgreSQL** (db.t3.small) with automated backups
+- ✅ **RDS Parameter Group** optimized for Supabase
+- ✅ **S3 Bucket** with versioning and encryption
+- ✅ **AWS Secrets Manager** secrets for database and Supabase config
+- ✅ **IAM Roles** for EKS cluster, node groups, and service accounts
+- ✅ **KMS Keys** for RDS and S3 encryption
+- ✅ **CloudWatch Log Groups** for monitoring
+- ✅ **Security Groups** with restrictive access rules
 
-## 3. Configure kubectl
+**Cost Impact**: ~$85-120/month (EKS cluster, RDS, compute instances)
 
+### Important Outputs
+After deployment completes, note these important outputs:
+```bash
+# Display important connection information
+terraform output
+# Note: cluster_name, rds_endpoint, s3_bucket_name
+```
+
+## 3. Configure kubectl Access
+
+### Update kubeconfig
 ```bash
 # Update kubeconfig for the EKS cluster
 aws eks update-kubeconfig --name supabase-development-eks --region eu-west-1
 
 # Verify cluster access
 kubectl get nodes
+# Should show 1-2 t3.medium nodes in Ready state
+
+# Check cluster information
+kubectl cluster-info
+# Should show Kubernetes control plane and CoreDNS endpoints
+
+# Verify EKS add-ons are running
+kubectl get pods -n kube-system
+# Should show aws-node, coredns, kube-proxy, ebs-csi-controller pods
+```
+
+### Verify Cluster Status
+```bash
+# Check node details
+kubectl describe nodes
+
+# Verify cluster autoscaler (if installed)
+kubectl get deployment cluster-autoscaler -n kube-system
+
+# Check for any issues
+kubectl get events --sort-by='.lastTimestamp' -A
 ```
 
 ## 4. Deploy Supabase Applications
 
+### Configure Applications Backend
 ```bash
 cd ../applications
 
+# Configure Terraform backend
+cat > backend.tf << EOF
+terraform {
+  backend "s3" {
+    bucket = "$BUCKET_NAME"
+    key    = "supabase/applications/terraform.tfstate"
+    region = "eu-west-1"
+  }
+}
+EOF
+
 # Initialize Terraform
 terraform init
+```
 
-# Review the plan
+### Deploy Supabase Stack
+```bash
+# Review planned changes
 terraform plan -out=applications.tfplan
 
-# Apply changes
+# Deploy applications (10-15 minutes)
 terraform apply applications.tfplan
 ```
 
-**Expected Resources Created:**
-- External Secrets Operator
-- Kubernetes secrets and config maps
-- Supabase services (Kong, PostgREST, Realtime, Auth, Storage)
-- Horizontal Pod Autoscalers
-- Ingress configuration
-- Service accounts with IRSA
+**Expected Resources Created (~10-15 minutes):**
+- ✅ **External Secrets Operator** (Helm chart) with AWS integration
+- ✅ **Secret Store** for AWS Secrets Manager connectivity
+- ✅ **External Secrets** syncing AWS secrets to Kubernetes
+- ✅ **Service Accounts** with IRSA annotations for AWS access
+- ✅ **Supabase Services** via custom Helm chart:
+  - Kong Gateway (2 replicas, port 8000)
+  - PostgREST (2 replicas, port 3000)
+  - Realtime (2 replicas, port 4000)
+  - Auth/GoTrue (2 replicas, port 9999)
+  - Storage API (2 replicas, port 5000)
+  - Dashboard (1 replica, port 3000)
+- ✅ **Horizontal Pod Autoscalers** for all services (2-10 replicas)
+- ✅ **Ingress** with ALB controller for external access
+- ✅ **Config Maps** for non-sensitive configuration
+- ✅ **Network Policies** for pod-to-pod communication control
 
-## 5. Verify Deployment
+**Cost Impact**: Minimal additional cost (mostly compute resources)
 
+### Monitor Deployment Progress
 ```bash
-# Check cluster status
+# Watch pods come online
+kubectl get pods -n supabase -w
+
+# Check External Secrets Operator
+kubectl get pods -n external-secrets
+
+# Verify secrets are created
+kubectl get secrets -n supabase
+```
+
+## 5. Verify Complete Deployment
+
+### Check Infrastructure Status
+```bash
+# Verify all nodes are ready
 kubectl get nodes
+# Expected: 1-2 nodes in Ready state
 
-# Check Supabase pods
+# Check all system pods are running
+kubectl get pods -n kube-system
+# Expected: All pods in Running state
+
+# Verify External Secrets Operator
+kubectl get pods -n external-secrets
+# Expected: external-secrets-* pods in Running state
+```
+
+### Verify Supabase Services
+```bash
+# Check all Supabase pods
 kubectl get pods -n supabase
+# Expected: All supabase-* pods in Running state (2 replicas each except dashboard)
 
-# Check services
+# Check services are exposed
 kubectl get svc -n supabase
+# Expected: ClusterIP services for each component
 
-# Check ingress
+# Check ingress is configured
 kubectl get ingress -n supabase
+# Expected: supabase-ingress with ALB address
 
-# Run smoke tests
-./scripts/smoke-test.sh development supabase
+# Verify HPA is active
+kubectl get hpa -n supabase
+# Expected: HPA resources with TARGETS showing current/target metrics
+```
+
+### Check Secret Synchronization
+```bash
+# Verify External Secrets are synced
+kubectl get externalsecret -n supabase
+# Expected: supabase-secrets and supabase-config with READY=True
+
+# Check Kubernetes secrets exist
+kubectl get secrets -n supabase
+# Expected: supabase-secrets and supabase-config secrets
+
+# Verify secret content (base64 encoded)
+kubectl get secret supabase-secrets -n supabase -o jsonpath='{.data}'
+```
+
+### Test API Connectivity
+```bash
+# Get ALB endpoint
+ALB_ENDPOINT=$(kubectl get ingress supabase-ingress -n supabase -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+echo "ALB Endpoint: $ALB_ENDPOINT"
+
+# Get anonymous API key
+ANON_KEY=$(kubectl get secret supabase-secrets -n supabase -o jsonpath='{.data.anon-key}' | base64 -d)
+echo "Anon Key: ${ANON_KEY:0:20}..."
+
+# Test PostgREST health endpoint
+curl -H "apikey: $ANON_KEY" "http://$ALB_ENDPOINT/rest/v1/" --connect-timeout 10
+# Expected: JSON response with service information
+
+# Test Kong gateway
+curl -H "apikey: $ANON_KEY" "http://$ALB_ENDPOINT/health" --connect-timeout 10
+# Expected: 200 OK response
 ```
 
 ## 📊 Monitoring Deployment Progress
@@ -316,17 +516,35 @@ kubectl logs -n kube-system -l app=cluster-autoscaler
 
 ## 🧪 Testing the Deployment
 
-### API Health Check
+### Complete API Testing
 
 ```bash
-# Get ingress URL
-INGRESS_URL=$(kubectl get ingress supabase-ingress -n supabase -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+# Set environment variables for testing
+export ALB_ENDPOINT=$(kubectl get ingress supabase-ingress -n supabase -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+export ANON_KEY=$(kubectl get secret supabase-secrets -n supabase -o jsonpath='{.data.anon-key}' | base64 -d)
+export SERVICE_ROLE_KEY=$(kubectl get secret supabase-secrets -n supabase -o jsonpath='{.data.service-role-key}' | base64 -d)
 
-# Get anonymous key
-ANON_KEY=$(kubectl get secret supabase-secrets -n supabase -o jsonpath='{.data.anon-key}' | base64 -d)
+echo "Testing Supabase API endpoints..."
+echo "ALB Endpoint: $ALB_ENDPOINT"
+echo "Anon Key: ${ANON_KEY:0:20}..."
 
-# Test health endpoint
-curl -H "apikey: $ANON_KEY" "http://$INGRESS_URL/rest/v1/health"
+# Test PostgREST API
+echo "\n1. Testing PostgREST (REST API):"
+curl -s -H "apikey: $ANON_KEY" "http://$ALB_ENDPOINT/rest/v1/" | jq .
+
+# Test Auth API
+echo "\n2. Testing Auth API:"
+curl -s -H "apikey: $ANON_KEY" "http://$ALB_ENDPOINT/auth/v1/settings" | jq .
+
+# Test Storage API
+echo "\n3. Testing Storage API:"
+curl -s -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY" "http://$ALB_ENDPOINT/storage/v1/buckets" | jq .
+
+# Test Realtime (WebSocket) - connection test
+echo "\n4. Testing Realtime WebSocket (connection test):"
+curl -s -H "apikey: $ANON_KEY" "http://$ALB_ENDPOINT/realtime/v1/" || echo "WebSocket endpoint ready"
+
+echo "\n✅ API Testing Complete"
 ```
 
 ### Database Operations
@@ -383,17 +601,46 @@ kubectl get serviceaccounts -n supabase
 
 ## 📈 Scaling
 
-### Manual Scaling
+### Scaling Operations
 
+#### Manual Pod Scaling
 ```bash
-# Scale node groups
+# Scale specific Supabase services
+kubectl scale deployment supabase-postgrest -n supabase --replicas=5
+kubectl scale deployment supabase-realtime -n supabase --replicas=3
+kubectl scale deployment supabase-auth -n supabase --replicas=4
+
+# Verify scaling
+kubectl get deployments -n supabase
+```
+
+#### Manual Node Scaling
+```bash
+# Scale EKS node groups
 aws eks update-nodegroup-config \
   --cluster-name supabase-development-eks \
-  --nodegroup-name supabase-general \
-  --scaling-config desiredSize=5,maxSize=10,minSize=2
+  --nodegroup-name supabase-development-small-general \
+  --scaling-config desiredSize=3,maxSize=6,minSize=1
 
-# Scale application deployments
-kubectl scale deployment supabase-postgrest -n supabase --replicas=5
+# Monitor node scaling
+kubectl get nodes
+aws eks describe-nodegroup --cluster-name supabase-development-eks --nodegroup-name supabase-development-small-general
+```
+
+#### Service Tier Scaling
+```bash
+# Change service tier for comprehensive scaling
+cd environments/ireland/development/core
+
+# Update to medium tier
+echo 'service_tier = "medium"' > terraform.tfvars
+terraform plan
+terraform apply
+
+# This will update:
+# - RDS instance class (db.t3.small -> db.t3.medium)
+# - EKS node instance types and counts
+# - Resource limits and HPA configurations
 ```
 
 ### Auto Scaling
@@ -439,14 +686,54 @@ aws eks update-nodegroup-version --cluster-name supabase-development-eks --nodeg
 
 ## 💰 Cost Management
 
-### Cost Monitoring
+### Cost Management and Monitoring
 
+#### View Current Costs
 ```bash
-# Estimate costs by resource tags
-aws ce get-dimension-values \
-  --dimension SERVICE \
-  --time-period Start=2024-01-01,End=2024-01-31 \
+# Get cost breakdown by service (last 30 days)
+aws ce get-cost-and-usage \
+  --time-period Start=$(date -d '30 days ago' '+%Y-%m-%d'),End=$(date '+%Y-%m-%d') \
+  --granularity MONTHLY \
+  --metrics BlendedCost \
+  --group-by Type=DIMENSION,Key=SERVICE \
   --filter '{"Tags":{"Key":"Project","Values":["supabase"]}}'
+
+# Get daily costs for current month
+aws ce get-cost-and-usage \
+  --time-period Start=$(date '+%Y-%m-01'),End=$(date '+%Y-%m-%d') \
+  --granularity DAILY \
+  --metrics BlendedCost \
+  --filter '{"Tags":{"Key":"Project","Values":["supabase"]}}'
+```
+
+#### Cost Optimization Actions
+```bash
+# 1. Switch to minimal tier for development
+cd environments/ireland/development/core
+echo 'service_tier = "minimal"' > terraform.tfvars
+terraform apply
+# Saves: ~$70-100/month
+
+# 2. Use spot instances for non-critical workloads
+kubectl taint nodes --all spot-instance=true:NoSchedule
+# Enable spot node groups in terraform configuration
+
+# 3. Schedule shutdown for development environment
+# Add to crontab: 0 18 * * 1-5 kubectl scale deployments --all --replicas=0 -n supabase
+# Add to crontab: 0 9 * * 1-5 kubectl scale deployments --all --replicas=2 -n supabase
+```
+
+#### Resource Utilization Monitoring
+```bash
+# Check resource usage
+kubectl top nodes
+kubectl top pods -n supabase
+
+# Check HPA metrics
+kubectl get hpa -n supabase -o wide
+
+# Monitor cluster autoscaler decisions
+kubectl logs -n kube-system -l app=cluster-autoscaler --tail=50
 ```
 
 ### Cost Optimization

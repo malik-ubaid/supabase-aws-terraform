@@ -86,7 +86,7 @@ output "db_credentials_secret_arn" {
 
 output "db_connection_string" {
   description = "Database connection string (stored in Secrets Manager)"
-  value       = "postgresql://${var.master_username}:${random_password.master_password.result}@${aws_db_instance.main.endpoint}:${aws_db_instance.main.port}/${var.database_name}"
+  value       = aws_db_instance.main.endpoint != null ? "postgresql://${var.master_username}:${random_password.master_password.result}@${aws_db_instance.main.endpoint}:${aws_db_instance.main.port}/${var.database_name}" : null
   sensitive   = true
 }
 

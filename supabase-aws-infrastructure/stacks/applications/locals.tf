@@ -29,7 +29,12 @@ locals {
     }
     
     # HPA configuration (only if HPA is enabled)
-    hpa_config = local.current_tier.supabase.enable_hpa ? try(local.current_tier.supabase.hpa, {
+    hpa_config = local.current_tier.supabase.enable_hpa ? try({
+      postgrest = { min_replicas = local.current_tier.supabase.hpa.postgrest.min, max_replicas = local.current_tier.supabase.hpa.postgrest.max, cpu_target = local.current_tier.supabase.hpa.postgrest.cpu_target }
+      realtime  = { min_replicas = local.current_tier.supabase.hpa.realtime.min, max_replicas = local.current_tier.supabase.hpa.realtime.max, cpu_target = local.current_tier.supabase.hpa.realtime.cpu_target }
+      auth      = { min_replicas = local.current_tier.supabase.hpa.auth.min, max_replicas = local.current_tier.supabase.hpa.auth.max, cpu_target = local.current_tier.supabase.hpa.auth.cpu_target }
+      storage   = { min_replicas = local.current_tier.supabase.hpa.storage.min, max_replicas = local.current_tier.supabase.hpa.storage.max, cpu_target = local.current_tier.supabase.hpa.storage.cpu_target }
+    }, {
       postgrest = { min_replicas = 1, max_replicas = 3, cpu_target = 70 }
       realtime  = { min_replicas = 1, max_replicas = 3, cpu_target = 70 }
       auth      = { min_replicas = 1, max_replicas = 3, cpu_target = 70 }

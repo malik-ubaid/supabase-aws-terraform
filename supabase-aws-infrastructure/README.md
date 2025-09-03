@@ -43,15 +43,22 @@ Enterprise-grade Infrastructure as Code for deploying [Supabase](https://supabas
 
 ## 🎛️ Service Tier System
 
-This project uses a **centralized service tier system** for cost control and easy scaling:
+This project uses a **centralized service tier system** controlled by a single configuration file (`service-tiers.yaml`) for cost control and easy scaling:
 
-| Tier | Monthly Cost | Use Case | EKS Nodes | RDS Instance |
-|------|-------------|----------|-----------|--------------|
-| **minimal** | $50-80 | 🧪 Development/Testing | 1x t3.small (SPOT) | db.t3.micro |
-| **small** | $150-250 | 🏢 Small Production | 2x t3.medium | db.t3.small |
-| **medium** | $300-500 | 🚀 Standard Production | 2x t3.large | db.t3.medium |
-| **large** | $800-1200 | 📈 High Traffic | 3x m5.large+ | db.r6g.large |
-| **xlarge** | $2000+ | 🏭 Enterprise Scale | 5x m5.xlarge+ | db.r6g.xlarge |
+| Tier | Monthly Cost | Use Case | EKS Nodes | RDS Instance | Features |
+|------|-------------|----------|-----------|--------------|----------|
+| **minimal** | $50-80 | 🧪 Development/Testing | 1x t3.small (SPOT) | db.t3.micro | Single-AZ, minimal resources |
+| **small** | $150-250 | 🏢 Small Production | 2x t3.medium | db.t3.small | HPA enabled, Multi-AZ optional |
+| **medium** | $300-500 | 🚀 Standard Production | 2x t3.large | db.t3.medium | Multi-AZ, enhanced monitoring |
+| **large** | $800-1200 | 📈 High Traffic | 3x m5.large+ | db.r6g.large | High performance, private endpoints |
+| **xlarge** | $2000+ | 🏭 Enterprise Scale | 5x m5.xlarge+ | db.r6g.xlarge | Maximum scale, all features enabled |
+
+### 🔧 Current Configuration (Small Tier)
+- **EKS**: 2-4 t3.medium nodes with auto-scaling
+- **RDS**: db.t3.small PostgreSQL 15.8
+- **Storage**: S3 with versioning and access logging
+- **Supabase**: HPA enabled (2-10 replicas per service)
+- **Monitoring**: CloudWatch logs and metrics
 
 ### 💡 Quick Tier Selection
 
@@ -184,26 +191,28 @@ The project defaults to the **`minimal`** tier for maximum cost savings during d
 | **Secrets Manager** | Secrets storage | Centralized secret management |
 | **ALB** | Load balancing | Application Load Balancer with SSL |
 
-### Supabase Services
+### Supabase Services (Deployed via Helm)
 
-| Service | Description | Scaling |
-|---------|-------------|---------|
-| **Kong Gateway** | API gateway and auth | HPA enabled |
-| **PostgREST** | Auto REST API | HPA enabled |
-| **Realtime** | WebSocket server | HPA enabled |
-| **Storage** | File management | HPA enabled |
-| **Auth** | User authentication | HPA enabled |
-| **Dashboard** | Admin interface | Single instance |
+| Service | Description | Replicas | Ports | Auto-scaling |
+|---------|-------------|----------|-------|---------------|
+| **Kong Gateway** | API gateway and proxy | 2 | 8000 | HPA (2-10) |
+| **PostgREST** | Auto-generated REST API | 2 | 3000 | HPA (2-10) |
+| **Realtime** | WebSocket subscriptions | 2 | 4000 | HPA (2-5) |
+| **Auth (GoTrue)** | User authentication | 2 | 9999 | HPA (2-5) |
+| **Storage API** | File upload/management | 2 | 5000 | HPA (2-5) |
+| **Dashboard** | Admin interface | 1 | 3000 | Fixed |
 
 ## 🔒 Security Features
 
-- ✅ **Network Isolation**: Private subnets for all workloads
-- ✅ **Secrets Management**: No hardcoded secrets, AWS Secrets Manager integration
-- ✅ **IAM Least Privilege**: Minimal required permissions for all roles
-- ✅ **Encryption**: At rest (EBS, RDS, S3) and in transit (TLS)
-- ✅ **Security Groups**: Restrictive network access rules
-- ✅ **HTTPS Only**: TLS termination at load balancer
-- ✅ **IMDSv2**: Enforced on all EC2 instances
+- ✅ **Network Isolation**: Private subnets for EKS and RDS workloads
+- ✅ **Secrets Management**: AWS Secrets Manager + External Secrets Operator
+- ✅ **IAM Least Privilege**: Service Account roles with IRSA integration
+- ✅ **Encryption**: KMS keys for RDS/S3, encrypted EBS volumes
+- ✅ **Security Groups**: Port-specific rules (5432 for RDS, 443 for ALB)
+- ✅ **VPC Endpoints**: Private connectivity to S3 and Secrets Manager
+- ✅ **HTTPS Only**: ALB with SSL termination
+- ✅ **Pod Security**: Non-root containers, read-only file systems
+- ✅ **Network Policies**: Kubernetes-level traffic control
 
 ## 📊 Monitoring & Observability
 
@@ -225,22 +234,19 @@ The project defaults to the **`minimal`** tier for maximum cost savings during d
 Key configuration options in `terraform.tfvars`:
 
 ```hcl
+# Service Tier Control (drives all other configurations)
+service_tier = "small"  # Options: minimal, small, medium, large, xlarge
+
 # Basic Configuration
-region = "eu-west-1"
-environment = "development"
+region       = "eu-west-1"
+environment  = "development"
 project_name = "supabase"
 
-# Network Configuration
-vpc_cidr = "10.100.0.0/16"
-availability_zones = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+# Optional: SSH access (null for production security)
+ec2_ssh_key = null
 
-# EKS Configuration
-kubernetes_version = "1.30"
-node_instance_types = ["t3.large", "t3.xlarge"]
-
-# Database Configuration
-db_instance_class = "db.t3.medium"
-db_allocated_storage = 100
+# All other settings are automatically configured based on service_tier
+# See service-tiers.yaml for complete tier specifications
 ```
 
 ### Supabase Configuration

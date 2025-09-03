@@ -36,7 +36,7 @@ locals {
     }
   ]
   
-  # Cost information
-  estimated_cost = local.current_tier.monthly_cost_estimate
+  # Cost information - sanitized for AWS tags (remove special characters)
+  estimated_cost = replace(replace(local.current_tier.monthly_cost_estimate, "$", ""), "-", " to ")
   tier_description = local.current_tier.description
 }

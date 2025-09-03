@@ -1,0 +1,102 @@
+{{- if .Values.kong.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "supabase.fullname" . }}-kong-config
+  labels:
+    {{- include "supabase.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kong
+data:
+  kong.yml: |
+    _format_version: "3.0"
+    _transform: true
+    
+    services:
+      - name: auth-v1-open
+        url: http://{{ include "supabase.fullname" . }}-auth:9999/
+        plugins:
+          - name: cors
+        routes:
+          - name: auth-v1-open
+            strip_path: true
+            paths:
+              - /auth/v1/authorize
+              - /auth/v1/callback
+              - /auth/v1/logout
+              - /auth/v1/token
+              - /auth/v1/signup
+              - /auth/v1/recover
+              - /auth/v1/settings
+              - /auth/v1/verify
+              - /auth/v1/user
+              - /auth/v1/otp
+              - /auth/v1/magiclink
+              - /auth/v1/invite
+              - /auth/v1/resend
+              - /auth/v1/admin/users
+              - /auth/v1/admin/generate_link
+              - /auth/v1/admin/users/list_factors
+              - /auth/v1/admin/users/delete_factor
+              - /auth/v1/factors
+              - /auth/v1/factors/verify
+              - /auth/v1/factors/challenge
+              - /auth/v1/factors/challenge/verify
+              - /auth/v1/sso/providers
+              - /auth/v1/sso
+      
+      - name: rest-v1
+        url: http://{{ include "supabase.fullname" . }}-postgrest:3000/
+        plugins:
+          - name: cors
+        routes:
+          - name: rest-v1-all
+            strip_path: true
+            paths:
+              - /rest/v1/
+      
+      - name: realtime-v1
+        url: http://{{ include "supabase.fullname" . }}-realtime:4000/socket/
+        plugins:
+          - name: cors
+        routes:
+          - name: realtime-v1-all
+            strip_path: true
+            paths:
+              - /realtime/v1/
+      
+      - name: storage-v1
+        url: http://{{ include "supabase.fullname" . }}-storage:5000/
+        plugins:
+          - name: cors
+        routes:
+          - name: storage-v1-all
+            strip_path: true
+            paths:
+              - /storage/v1/
+    
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+            - HEAD
+          headers:
+            - Accept
+            - Accept-Language
+            - Content-Language
+            - Content-Type
+            - Authorization
+            - apikey
+            - X-Requested-With
+          exposed_headers:
+            - X-Request-ID
+          credentials: true
+          max_age: 3600
+{{- end }}

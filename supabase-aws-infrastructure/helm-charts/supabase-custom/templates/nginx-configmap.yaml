@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "supabase.fullname" . }}-nginx-config
+  labels:
+    {{- include "supabase.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+        
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        
+        # API endpoints will be added later as services come online
+        location /api/ {
+            return 503 '{"error":"Services not yet available"}';
+            add_header Content-Type application/json;
+        }
+        
+        # Default location
+        location / {
+            return 200 '{"message":"Supabase API Gateway","version":"1.0.0"}';
+            add_header Content-Type application/json;
+        }
+    }

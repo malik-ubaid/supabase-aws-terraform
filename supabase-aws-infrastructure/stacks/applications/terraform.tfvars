@@ -1,7 +1,7 @@
 # Centralized Service Tier Configuration
 # This should match the service_tier in core/terraform.tfvars
 
-service_tier = "minimal"  # Options: minimal, small, medium, large, xlarge
+service_tier = "small"  # Options: minimal, small, medium, large, xlarge
 
 # Basic Configuration
 region       = "eu-west-1"

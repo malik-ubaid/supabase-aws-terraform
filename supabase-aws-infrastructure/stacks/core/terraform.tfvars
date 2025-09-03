@@ -1,7 +1,7 @@
 # Centralized Service Tier Configuration
 # Change this single variable to control all infrastructure sizing and costs
 
-service_tier = "minimal"  # Options: minimal, small, medium, large, xlarge
+service_tier = "small"  # Options: minimal, small, medium, large, xlarge
 
 # Basic Configuration
 region       = "eu-west-1"

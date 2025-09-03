@@ -69,22 +69,34 @@ rds:
 
 ### Setting a Service Tier
 
-**Option 1: Update terraform.tfvars**
+**Current Configuration Method:**
 ```bash
-# Edit core configuration
-vim environments/ireland/development/core/terraform.tfvars
+# View current service tier
+cat environments/ireland/development/core/terraform.tfvars
+# Should show: service_tier = "small"
 
-# Change this line:
-service_tier = "minimal"  # Change to desired tier
+# Change tier by editing terraform.tfvars
+cd environments/ireland/development/core
+echo 'service_tier = "minimal"' > terraform.tfvars  # Change to desired tier
+
+# Validate configuration
+cat service-tiers.yaml | grep -A 20 "minimal:"  # View tier specifications
 ```
 
-**Option 2: Use the change-tier script**
+**Apply Tier Changes:**
 ```bash
-# Interactive tier change
-./scripts/change-tier.sh small development
+# Plan the changes
+terraform plan -out=tier-change.tfplan
 
-# Validate tier configuration
-./scripts/validate-tier.sh small
+# Review resource changes carefully
+terraform show tier-change.tfplan
+
+# Apply during maintenance window
+terraform apply tier-change.tfplan
+
+# Update applications to match new tier
+cd ../applications
+terraform plan && terraform apply
 ```
 
 ### Deploying with a Specific Tier
@@ -183,36 +195,58 @@ terraform apply
 | **Private Endpoints** | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **Backup Retention** | 1 day | 3 days | 7 days | 14 days | 30 days |
 
-## 🔍 Monitoring Your Tier
+## 🔍 Monitoring Your Current Tier
 
-### Resource Utilization
+### Current Implementation Status
+The infrastructure is currently deployed with **Small Tier** configuration:
+
+- **EKS**: 2-4 t3.medium nodes with auto-scaling
+- **RDS**: db.t3.small PostgreSQL 15.8 (single AZ)
+- **Storage**: S3 with versioning enabled
+- **Auto-scaling**: HPA enabled for all Supabase services (2-10 replicas)
+- **Cost**: Approximately $150-250/month
+
+### Resource Utilization Monitoring
 
 ```bash
-# Check node utilization
+# Check current node resource usage
 kubectl top nodes
+# Expected: 1-2 t3.medium nodes with moderate utilization
 
-# Check pod resource usage
+# Check Supabase pod resource usage
 kubectl top pods -n supabase
+# Expected: Multiple pods with varying CPU/memory usage
 
-# Check HPA status
-kubectl get hpa -n supabase
+# Check HPA status and scaling decisions
+kubectl get hpa -n supabase -o wide
+# Expected: HPA showing current replicas vs targets
+
+# Check cluster autoscaler activity
+kubectl logs -n kube-system -l app=cluster-autoscaler --tail=20
 ```
 
-### Cost Monitoring
+### Cost Monitoring (Current Small Tier)
 
 ```bash
-# AWS Cost Explorer (by service tier tag)
+# Check current month costs for Supabase project
+aws ce get-cost-and-usage \
+  --time-period Start=$(date '+%Y-%m-01'),End=$(date '+%Y-%m-%d') \
+  --granularity DAILY \
+  --metrics BlendedCost \
+  --group-by Type=DIMENSION,Key=SERVICE \
+  --filter '{"Tags":{"Key":"Project","Values":["supabase"]}}'
+
+# Get cost breakdown by AWS service
 aws ce get-dimension-values \
   --dimension SERVICE \
-  --time-period Start=2024-01-01,End=2024-01-31 \
-  --filter '{"Tags":{"Key":"ServiceTier","Values":["minimal"]}}'
+  --time-period Start=$(date -d '30 days ago' '+%Y-%m-%d'),End=$(date '+%Y-%m-%d') \
+  --filter '{"Tags":{"Key":"ServiceTier","Values":["small"]}}'
 
-# Resource-specific costs
-aws ce get-cost-and-usage \
-  --time-period Start=2024-01-01,End=2024-01-31 \
-  --granularity MONTHLY \
-  --metrics BlendedCost \
-  --group-by Type=DIMENSION,Key=SERVICE
+# Expected major costs:
+# - Amazon Elastic Kubernetes Service: ~$73/month
+# - Amazon Elastic Compute Cloud: ~$60-90/month
+# - Amazon Relational Database Service: ~$25-35/month
+# - Amazon Elastic Load Balancing: ~$18/month
 ```
 
 ### Performance Monitoring
@@ -266,17 +300,36 @@ aws cloudwatch put-metric-alarm \
 
 ## 🛠️ Customization Options
 
-### Override Specific Resources
+### Customizing Service Tiers
 
-While service tiers provide good defaults, you can override specific settings:
+The current implementation uses the centralized `service-tiers.yaml` file for all configurations. To customize:
 
-```hcl
-# In terraform.tfvars
-service_tier = "minimal"
+```bash
+# Option 1: Modify service-tiers.yaml directly
+vim service-tiers.yaml
+# Edit the specific tier section you want to customize
 
-# Override specific settings
-override_rds_instance_class = "db.t3.small"  # Upgrade just the database
-override_node_instance_types = ["t3.medium"] # Upgrade just the nodes
+# Option 2: Create environment-specific overrides in terraform.tfvars
+cd environments/ireland/development/core
+cat >> terraform.tfvars << EOF
+# Optional overrides (uncomment and modify as needed)
+# ec2_ssh_key = "my-key-pair"  # Enable SSH access for debugging
+# external_url = "https://api.supabase-dev.mycompany.com"
+# certificate_arn = "arn:aws:acm:eu-west-1:123456789:certificate/abc-123"
+EOF
+```
+
+**Example: Custom Resource Allocation**
+```yaml
+# In service-tiers.yaml, customize the small tier:
+small:
+  supabase:
+    resources:
+      postgrest:
+        requests: { cpu: "200m", memory: "512Mi" }  # Increased from defaults
+        limits: { cpu: "1000m", memory: "1Gi" }
+    hpa:
+      postgrest: { min: 3, max: 15, cpu_target: 60 }  # More aggressive scaling
 ```
 
 ### Environment-Specific Adjustments

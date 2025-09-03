@@ -238,7 +238,11 @@ persistence:
 
 # Node selection
 nodeSelector: {}
-tolerations: []
+tolerations:
+  - key: spot-instance
+    value: "true"
+    operator: Equal
+    effect: NoSchedule
 affinity: {}
 
 # Pod priority

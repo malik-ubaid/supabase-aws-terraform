@@ -57,15 +57,48 @@ resource "helm_release" "external_secrets" {
   namespace        = "external-secrets"
   create_namespace = true
 
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.external_secrets_role_arn
-  }
+  values = [
+    yamlencode({
+      installCRDs = true
+      
+      serviceAccount = {
+        annotations = {
+          "eks.amazonaws.com/role-arn" = var.external_secrets_role_arn
+        }
+      }
+      
+      tolerations = [
+        {
+          key      = "spot-instance"
+          value    = "true"
+          operator = "Equal"
+          effect   = "NoSchedule"
+        }
+      ]
+      
+      webhook = {
+        tolerations = [
+          {
+            key      = "spot-instance"
+            value    = "true"
+            operator = "Equal"
+            effect   = "NoSchedule"
+          }
+        ]
+      }
+      
+      certController = {
+        tolerations = [
+          {
+            key      = "spot-instance"
+            value    = "true"
+            operator = "Equal"
+            effect   = "NoSchedule"
+          }
+        ]
+      }
+    })
+  ]
 }
 
 resource "kubernetes_service_account" "external_secrets" {
@@ -95,8 +128,10 @@ resource "kubernetes_manifest" "secret_store" {
           service = "SecretsManager"
           region  = var.region
           auth = {
-            serviceAccount = {
-              name = kubernetes_service_account.external_secrets.metadata[0].name
+            jwt = {
+              serviceAccountRef = {
+                name = kubernetes_service_account.external_secrets.metadata[0].name
+              }
             }
           }
         }
@@ -218,7 +253,7 @@ resource "kubernetes_config_map" "supabase_config" {
 
 resource "helm_release" "supabase" {
   name      = "supabase"
-  chart     = "${path.module}/../../../helm-charts/supabase-custom"
+  chart     = "${path.module}/../../helm-charts/supabase-custom"
   namespace = var.namespace
   
   timeout = 600
@@ -227,6 +262,8 @@ resource "helm_release" "supabase" {
   values = [
     templatefile("${path.module}/helm-values.yaml", {
       namespace                = var.namespace
+      environment             = var.environment
+      project_name            = var.project_name  
       external_url            = var.external_url
       database_host           = var.database_config.host
       database_port           = var.database_config.port

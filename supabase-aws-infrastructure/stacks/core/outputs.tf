@@ -80,7 +80,10 @@ output "secret_names" {
 
 output "iam_role_arns" {
   description = "Map of all IAM role ARNs"
-  value       = module.iam.iam_role_arns
+  value       = merge(
+    module.iam.iam_role_arns,
+    module.iam_service_accounts.iam_role_arns
+  )
 }
 
 output "kubeconfig" {

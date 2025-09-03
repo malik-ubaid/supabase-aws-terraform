@@ -1,0 +1,269 @@
+<mxfile host="app.diagrams.net" modified="2024-12-06T10:00:00.000Z" agent="5.0" version="24.7.17" etag="XYZ123" type="device">
+  <diagram name="Supabase AWS Architecture" id="supabase-aws-architecture">
+    <mxGraphModel dx="2074" dy="1154" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- AWS Region Container -->
+        <mxCell id="aws-region" value="AWS Region: eu-west-1" style="fillColor=#FF9102;strokeColor=#D79B00;dashed=1;verticalAlign=top;fontStyle=0;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="1550" height="1080" as="geometry"/>
+        </mxCell>
+        
+        <!-- VPC Container -->
+        <mxCell id="vpc" value="VPC (10.0.0.0/16)" style="fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="1470" height="980" as="geometry"/>
+        </mxCell>
+        
+        <!-- Availability Zones -->
+        <mxCell id="az1" value="Availability Zone 1a" style="fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="160" width="440" height="880" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="az2" value="Availability Zone 1b" style="fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="160" width="440" height="880" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="az3" value="Availability Zone 1c" style="fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="160" width="440" height="880" as="geometry"/>
+        </mxCell>
+        
+        <!-- Internet Gateway -->
+        <mxCell id="igw" value="Internet Gateway" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;" vertex="1" parent="1">
+          <mxGeometry x="750" y="60" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- Public Subnets -->
+        <mxCell id="public-subnet-1" value="Public Subnet 1&#xa;10.0.1.0/24" style="fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="200" width="180" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="public-subnet-2" value="Public Subnet 2&#xa;10.0.2.0/24" style="fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="200" width="180" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="public-subnet-3" value="Public Subnet 3&#xa;10.0.3.0/24" style="fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="200" width="180" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- NAT Gateways -->
+        <mxCell id="nat-1" value="NAT Gateway 1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+          <mxGeometry x="191" y="240" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="nat-2" value="NAT Gateway 2" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+          <mxGeometry x="671" y="240" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="nat-3" value="NAT Gateway 3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+          <mxGeometry x="1151" y="240" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- EKS Private Subnets -->
+        <mxCell id="eks-subnet-1" value="EKS Private Subnet 1&#xa;10.0.10.0/24" style="fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="340" width="180" height="280" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="eks-subnet-2" value="EKS Private Subnet 2&#xa;10.0.11.0/24" style="fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="340" width="180" height="280" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="eks-subnet-3" value="EKS Private Subnet 3&#xa;10.0.12.0/24" style="fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="340" width="180" height="280" as="geometry"/>
+        </mxCell>
+        
+        <!-- EKS Cluster -->
+        <mxCell id="eks-cluster" value="EKS Cluster&#xa;supabase-dev-eks&#xa;v1.30" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;" vertex="1" parent="1">
+          <mxGeometry x="830" y="380" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- Node Groups -->
+        <mxCell id="node-group-1" value="Node Group&#xa;t3.medium&#xa;1-2 nodes" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_instance;" vertex="1" parent="1">
+          <mxGeometry x="180" y="480" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="node-group-2" value="Node Group&#xa;t3.medium&#xa;1-2 nodes" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_instance;" vertex="1" parent="1">
+          <mxGeometry x="660" y="480" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="node-group-3" value="Node Group&#xa;t3.medium&#xa;1-2 nodes" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_instance;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="480" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <!-- Supabase Services in Kubernetes -->
+        <mxCell id="k8s-namespace" value="Kubernetes Namespace: supabase" style="fillColor=#f8cecc;strokeColor=#b85450;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="380" width="600" height="200" as="geometry"/>
+        </mxCell>
+        
+        <!-- Kong API Gateway -->
+        <mxCell id="kong" value="Kong API Gateway&#xa;Replicas: 2&#xa;Port: 8000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="410" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- PostgREST -->
+        <mxCell id="postgrest" value="PostgREST&#xa;Replicas: 2&#xa;Port: 3000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="290" y="410" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Realtime -->
+        <mxCell id="realtime" value="Realtime&#xa;Replicas: 2&#xa;Port: 4000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="410" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Auth (GoTrue) -->
+        <mxCell id="auth" value="Auth (GoTrue)&#xa;Replicas: 2&#xa;Port: 9999" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="510" y="410" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Storage -->
+        <mxCell id="storage" value="Storage API&#xa;Replicas: 2&#xa;Port: 5000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="410" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Dashboard -->
+        <mxCell id="dashboard" value="Dashboard&#xa;(Studio)&#xa;Replicas: 1&#xa;Port: 3000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="480" width="90" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- HPA -->
+        <mxCell id="hpa" value="Horizontal Pod Autoscaler&#xa;Min: 2, Max: 10&#xa;CPU Target: 70%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="290" y="480" width="140" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- RDS Private Subnets -->
+        <mxCell id="rds-subnet-1" value="RDS Private Subnet 1&#xa;10.0.20.0/24" style="fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="660" width="180" height="120" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="rds-subnet-2" value="RDS Private Subnet 2&#xa;10.0.21.0/24" style="fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="660" width="180" height="120" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="rds-subnet-3" value="RDS Private Subnet 3&#xa;10.0.22.0/24" style="fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;fontColor=#1D3557;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="660" width="180" height="120" as="geometry"/>
+        </mxCell>
+        
+        <!-- RDS PostgreSQL -->
+        <mxCell id="rds" value="RDS PostgreSQL&#xa;supabase-dev-postgresql&#xa;db.t3.small&#xa;Engine: 15.8&#xa;Multi-AZ: false" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;" vertex="1" parent="1">
+          <mxGeometry x="671" y="700" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- S3 Bucket -->
+        <mxCell id="s3" value="S3 Bucket&#xa;supabase-dev-storage&#xa;Storage Backend" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="380" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- Secrets Manager -->
+        <mxCell id="secrets" value="AWS Secrets Manager&#xa;Database Credentials&#xa;JWT Secrets&#xa;Supabase Config" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="500" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- ALB -->
+        <mxCell id="alb" value="Application Load Balancer&#xa;Internet-facing&#xa;SSL/TLS Termination" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.application_load_balancer;" vertex="1" parent="1">
+          <mxGeometry x="750" y="140" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- VPC Endpoints -->
+        <mxCell id="vpc-endpoint-s3" value="S3 VPC Endpoint" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc_endpoint;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="620" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vpc-endpoint-secrets" value="Secrets Manager&#xa;VPC Endpoint" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc_endpoint;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="680" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <!-- External Secrets Operator -->
+        <mxCell id="external-secrets" value="External Secrets&#xa;Operator&#xa;Namespace: external-secrets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="450" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- KMS Keys -->
+        <mxCell id="kms-rds" value="KMS Key&#xa;RDS Encryption" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.key_management_service;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="740" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="kms-s3" value="KMS Key&#xa;S3 Encryption" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.key_management_service;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="800" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <!-- Service Tiers Information -->
+        <mxCell id="service-tiers" value="Service Tiers Configuration&#xa;Current Tier: Small&#xa;• EKS: t3.medium nodes (2-4 instances)&#xa;• RDS: db.t3.small&#xa;• HPA: 2-10 replicas&#xa;• Multi-AZ: false&#xa;• Monthly Cost: $150-250" style="whiteSpace=wrap;html=1;fillColor=#F0F8FF;strokeColor=#4682B4;fontColor=#1D3557;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="820" width="380" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- IAM Roles -->
+        <mxCell id="iam-roles" value="IAM Roles&#xa;• EKS Cluster Role&#xa;• EKS Node Group Role&#xa;• EBS CSI Driver Role&#xa;• Load Balancer Controller Role&#xa;• External Secrets Role&#xa;• Storage Service Account Role" style="whiteSpace=wrap;html=1;fillColor=#FFF8DC;strokeColor=#D4AC0D;fontColor=#1D3557;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="940" width="380" height="120" as="geometry"/>
+        </mxCell>
+        
+        <!-- CloudWatch -->
+        <mxCell id="cloudwatch" value="CloudWatch Logs&#xa;• EKS Cluster Logs&#xa;• VPC Flow Logs&#xa;• RDS Logs" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="860" width="48" height="48" as="geometry"/>
+        </mxCell>
+        
+        <!-- Route Tables -->
+        <mxCell id="route-table-public" value="Public Route Table&#xa;0.0.0.0/0 → IGW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="340" y="220" width="120" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="route-table-private" value="Private Route Table&#xa;0.0.0.0/0 → NAT GW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#1D3557;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="340" y="270" width="120" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Connections -->
+        <!-- Internet to IGW -->
+        <mxCell id="connection1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1" source="igw" target="alb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- ALB to Kong -->
+        <mxCell id="connection2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="alb" target="kong">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Kong to Services -->
+        <mxCell id="connection3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673A6;strokeWidth=1;" edge="1" parent="1" source="kong" target="postgrest">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="connection4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=1;" edge="1" parent="1" source="kong" target="realtime">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="connection5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;strokeWidth=1;" edge="1" parent="1" source="kong" target="auth">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Services to RDS -->
+        <mxCell id="connection6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3334B9;strokeWidth=2;" edge="1" parent="1" source="postgrest" target="rds">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="connection7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3334B9;strokeWidth=2;" edge="1" parent="1" source="auth" target="rds">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Storage to S3 -->
+        <mxCell id="connection8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#277116;strokeWidth=2;" edge="1" parent="1" source="storage" target="s3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- External Secrets to Secrets Manager -->
+        <mxCell id="connection9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C7131F;strokeWidth=2;" edge="1" parent="1" source="external-secrets" target="secrets">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Legend -->
+        <mxCell id="legend" value="Legend&#xa;• Terraform-managed infrastructure&#xa;• Service Tier: Small (configurable)&#xa;• High Availability: Multi-AZ deployment&#xa;• Security: VPC endpoints, encryption at rest&#xa;• Monitoring: CloudWatch integration&#xa;• Auto-scaling: HPA enabled" style="whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1D3557;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="140" y="820" width="300" height="120" as="geometry"/>
+        </mxCell>
+        
+        <!-- Environment Info -->
+        <mxCell id="env-info" value="Environment: Development&#xa;Region: eu-west-1&#xa;VPC CIDR: 10.0.0.0/16&#xa;Cluster: supabase-development-eks" style="whiteSpace=wrap;html=1;fillColor=#E6F3FF;strokeColor=#4A90E2;fontColor=#1D3557;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="140" y="960" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -44,7 +44,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
     endpoint = aws_db_instance.main.endpoint
     port     = aws_db_instance.main.port
     dbname   = var.database_name
-    url      = "postgresql://${var.master_username}:${random_password.master_password.result}@${aws_db_instance.main.endpoint}:${aws_db_instance.main.port}/${var.database_name}"
+    url      = aws_db_instance.main.endpoint != null ? "postgresql://${var.master_username}:${random_password.master_password.result}@${aws_db_instance.main.endpoint}:${aws_db_instance.main.port}/${var.database_name}" : ""
   })
 }
 
@@ -90,8 +90,9 @@ resource "aws_db_parameter_group" "main" {
   name   = "${var.project_name}-${var.environment}-postgres-params"
 
   parameter {
-    name  = "shared_preload_libraries"
-    value = "pg_stat_statements,pg_cron"
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements,pg_cron"
+    apply_method = "pending-reboot"
   }
 
   parameter {
@@ -120,8 +121,9 @@ resource "aws_db_parameter_group" "main" {
   }
 
   parameter {
-    name  = "max_connections"
-    value = "200"
+    name         = "max_connections"
+    value        = "200"
+    apply_method = "pending-reboot"
   }
 
   parameter {
@@ -225,7 +227,7 @@ resource "aws_db_instance" "main" {
   copy_tags_to_snapshot    = var.copy_tags_to_snapshot
 
   performance_insights_enabled          = var.performance_insights_enabled
-  performance_insights_retention_period = var.performance_insights_retention_period
+  performance_insights_retention_period = var.performance_insights_enabled ? var.performance_insights_retention_period : null
 
   monitoring_interval = var.monitoring_interval
   monitoring_role_arn = var.monitoring_interval > 0 ? aws_iam_role.enhanced_monitoring[0].arn : null

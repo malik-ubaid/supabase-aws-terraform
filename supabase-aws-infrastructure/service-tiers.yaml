@@ -95,6 +95,7 @@ tiers:
       instance_class: "db.t3.small"
       allocated_storage: 50
       max_allocated_storage: 500
+      storage_type: "gp2"
       engine_version: "15.8"
       multi_az: false
       backup_retention_period: 3

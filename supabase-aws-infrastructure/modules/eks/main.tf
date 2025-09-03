@@ -6,14 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.0"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.20"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.10"
-    }
     tls = {
       source  = "hashicorp/tls"
       version = ">= 4.0"
@@ -307,84 +299,3 @@ data "aws_eks_addon_version" "ebs_csi_driver" {
   most_recent        = true
 }
 
-resource "helm_release" "cluster_autoscaler" {
-  count      = var.cluster_autoscaler_role_arn != null ? 1 : 0
-  name       = "cluster-autoscaler"
-  repository = "https://kubernetes.github.io/autoscaler"
-  chart      = "cluster-autoscaler"
-  version    = "9.37.0"
-  namespace  = "kube-system"
-
-  set {
-    name  = "autoDiscovery.clusterName"
-    value = aws_eks_cluster.main.name
-  }
-
-  set {
-    name  = "awsRegion"
-    value = var.region
-  }
-
-  set {
-    name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.cluster_autoscaler_role_arn
-  }
-
-  set {
-    name  = "rbac.serviceAccount.name"
-    value = "cluster-autoscaler"
-  }
-
-  set {
-    name  = "extraArgs.scale-down-delay-after-add"
-    value = "10m"
-  }
-
-  set {
-    name  = "extraArgs.scale-down-unneeded-time"
-    value = "10m"
-  }
-
-  depends_on = [aws_eks_node_group.main]
-}
-
-resource "helm_release" "aws_load_balancer_controller" {
-  count      = var.aws_load_balancer_controller_role_arn != null ? 1 : 0
-  name       = "aws-load-balancer-controller"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  version    = "1.8.1"
-  namespace  = "kube-system"
-
-  set {
-    name  = "clusterName"
-    value = aws_eks_cluster.main.name
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
-  }
-
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.aws_load_balancer_controller_role_arn
-  }
-
-  set {
-    name  = "region"
-    value = var.region
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
-  }
-
-  depends_on = [aws_eks_node_group.main]
-}
