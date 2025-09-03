@@ -1,0 +1,274 @@
+nameOverride: "supabase"
+fullnameOverride: "supabase"
+
+global:
+  labels:
+    environment: "${environment}"
+    project: "${project_name}"
+
+# Database Configuration (External RDS)
+database:
+  external: true
+  host: "${database_host}"
+  port: ${database_port}
+  name: "${database_name}"
+  
+# Storage Configuration (External S3)
+storage:
+  backend: "s3"
+  s3:
+    bucket: "${s3_bucket}"
+    region: "${s3_region}"
+  serviceAccountName: "${storage_service_account}"
+
+# Kong API Gateway
+kong:
+  image:
+    tag: "${image_tag}"
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "${kong_requests_cpu}"
+      memory: "${kong_requests_memory}"
+    limits:
+      cpu: "${kong_limits_cpu}"
+      memory: "${kong_limits_memory}"
+  
+  service:
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 8000
+        targetPort: 8000
+        protocol: TCP
+      - name: admin
+        port: 8001
+        targetPort: 8001
+        protocol: TCP
+
+# PostgREST API
+postgrest:
+  image:
+    tag: "${image_tag}"
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "${postgrest_requests_cpu}"
+      memory: "${postgrest_requests_memory}"
+    limits:
+      cpu: "${postgrest_limits_cpu}"
+      memory: "${postgrest_limits_memory}"
+  
+  env:
+    - name: PGRST_DB_URI
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: database_url
+    - name: PGRST_JWT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: supabase-secrets
+          key: jwt-secret
+    - name: PGRST_DB_ANON_ROLE
+      value: "anon"
+
+# Realtime Server
+realtime:
+  image:
+    tag: "${image_tag}"
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "${realtime_requests_cpu}"
+      memory: "${realtime_requests_memory}"
+    limits:
+      cpu: "${realtime_limits_cpu}"
+      memory: "${realtime_limits_memory}"
+  
+  env:
+    - name: DB_HOST
+      value: "${database_host}"
+    - name: DB_PORT
+      value: "${database_port}"
+    - name: DB_NAME
+      value: "${database_name}"
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: username
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: password
+    - name: JWT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: supabase-secrets
+          key: jwt-secret
+
+# Auth Service
+auth:
+  image:
+    tag: "${image_tag}"
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "${auth_requests_cpu}"
+      memory: "${auth_requests_memory}"
+    limits:
+      cpu: "${auth_limits_cpu}"
+      memory: "${auth_limits_memory}"
+  
+  env:
+    - name: GOTRUE_DB_DRIVER
+      value: "postgres"
+    - name: GOTRUE_DB_DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: database_url
+    - name: GOTRUE_JWT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: supabase-secrets
+          key: jwt-secret
+    - name: GOTRUE_JWT_EXP
+      value: "3600"
+    - name: GOTRUE_SITE_URL
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: site_url
+    - name: GOTRUE_API_EXTERNAL_URL
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: api_external_url
+
+# Storage Service
+supabase-storage:
+  image:
+    tag: "${image_tag}"
+  replicaCount: 2
+  serviceAccountName: "${storage_service_account}"
+  resources:
+    requests:
+      cpu: "${storage_requests_cpu}"
+      memory: "${storage_requests_memory}"
+    limits:
+      cpu: "${storage_limits_cpu}"
+      memory: "${storage_limits_memory}"
+  
+  env:
+    - name: POSTGREST_URL
+      value: "http://supabase-postgrest:3000"
+    - name: STORAGE_BACKEND
+      value: "s3"
+    - name: AWS_REGION
+      value: "${s3_region}"
+    - name: AWS_S3_BUCKET
+      value: "${s3_bucket}"
+    - name: DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          name: supabase-config
+          key: database_url
+
+# Horizontal Pod Autoscaler configurations
+%{ if enable_hpa }
+autoscaling:
+  postgrest:
+    enabled: true
+    minReplicas: ${postgrest_hpa_min}
+    maxReplicas: ${postgrest_hpa_max}
+    targetCPUUtilizationPercentage: ${postgrest_hpa_cpu}
+  
+  realtime:
+    enabled: true
+    minReplicas: ${realtime_hpa_min}
+    maxReplicas: ${realtime_hpa_max}
+    targetCPUUtilizationPercentage: ${realtime_hpa_cpu}
+  
+  auth:
+    enabled: true
+    minReplicas: ${auth_hpa_min}
+    maxReplicas: ${auth_hpa_max}
+    targetCPUUtilizationPercentage: ${auth_hpa_cpu}
+  
+  storage:
+    enabled: true
+    minReplicas: ${storage_hpa_min}
+    maxReplicas: ${storage_hpa_max}
+    targetCPUUtilizationPercentage: ${storage_hpa_cpu}
+%{ endif }
+
+# Service configurations
+services:
+  kong:
+    type: ClusterIP
+    ports:
+      - port: 8000
+        targetPort: 8000
+        name: http
+  
+  postgrest:
+    type: ClusterIP
+    ports:
+      - port: 3000
+        targetPort: 3000
+        name: http
+  
+  realtime:
+    type: ClusterIP
+    ports:
+      - port: 4000
+        targetPort: 4000
+        name: http
+  
+  auth:
+    type: ClusterIP
+    ports:
+      - port: 9999
+        targetPort: 9999
+        name: http
+  
+  storage:
+    type: ClusterIP
+    ports:
+      - port: 5000
+        targetPort: 5000
+        name: http
+
+# Network Policies
+networkPolicies:
+  enabled: true
+  
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Security Context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Health checks
+healthChecks:
+  enabled: true
+  
+# Persistence
+persistence:
+  enabled: true
+  storageClass: "gp3"
+  size: "10Gi"

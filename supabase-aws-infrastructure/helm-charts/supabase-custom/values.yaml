@@ -1,0 +1,252 @@
+# Default values for supabase.
+nameOverride: ""
+fullnameOverride: ""
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  
+image:
+  repository: supabase/supabase
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Kong API Gateway
+kong:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: kong
+    tag: "3.4"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+  
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+# PostgREST
+postgrest:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: postgrest/postgrest
+    tag: "v12.0.2"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+# Realtime
+realtime:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: supabase/realtime
+    tag: "v2.25.50"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+
+# Auth (GoTrue)
+auth:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: supabase/gotrue
+    tag: "v2.143.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 9999
+    targetPort: 9999
+
+# Storage
+storage:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: supabase/storage-api
+    tag: "v0.46.4"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 5000
+    targetPort: 5000
+
+# Dashboard (Studio)
+dashboard:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: supabase/studio
+    tag: "20240326-5e5586d"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+# Database Configuration (External)
+database:
+  external: true
+  host: ""
+  port: 5432
+  name: "supabase"
+  user: "supabase"
+
+# Storage Configuration (External S3)
+storageBackend:
+  type: "s3"
+  s3:
+    bucket: ""
+    region: "eu-west-1"
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  
+  postgrest:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  realtime:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  auth:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  storage:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Network Policies
+networkPolicies:
+  enabled: true
+
+# Pod Disruption Budgets
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Ingress
+ingress:
+  enabled: true
+  className: "alb"
+  annotations: {}
+  hosts: []
+  tls: []
+
+# Persistence
+persistence:
+  enabled: true
+  storageClass: "gp3"
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# Node selection
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Pod priority
+priorityClassName: ""
+
+# Service Monitor (for Prometheus)
+serviceMonitor:
+  enabled: false
+  namespace: monitoring
+  interval: 30s
+  scrapeTimeout: 10s

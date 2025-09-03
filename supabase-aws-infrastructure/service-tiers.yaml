@@ -1,0 +1,359 @@
+# Service Tier Configurations for Supabase Infrastructure
+# This file controls all service sizing and costs across environments
+
+# Available tiers: minimal, small, medium, large, xlarge
+# Use 'minimal' for development/testing to minimize costs
+
+tiers:
+  minimal:
+    description: "Minimal resources for development and testing"
+    monthly_cost_estimate: "$50-80"
+    use_cases: ["development", "testing", "proof-of-concept"]
+    
+    eks:
+      cluster_version: "1.30"
+      endpoint_private_access: false  # Public for easier testing
+      endpoint_public_access: true
+      node_groups:
+        - name: "minimal-nodes"
+          instance_types: ["t3.small", "t3.medium"]
+          capacity_type: "SPOT"
+          desired_size: 1
+          max_size: 2
+          min_size: 1
+          disk_size: 20
+    
+    rds:
+      instance_class: "db.t3.micro"
+      allocated_storage: 20
+      max_allocated_storage: 100
+      engine_version: "15.8"
+      multi_az: false
+      backup_retention_period: 1
+      deletion_protection: false
+      performance_insights_enabled: false
+      monitoring_interval: 0
+    
+    s3:
+      versioning_enabled: false
+      force_destroy: true
+      enable_access_logging: false
+    
+    supabase:
+      image_tag: "latest"
+      enable_hpa: false
+      resources:
+        kong:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "200m", memory: "256Mi" }
+        postgrest:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "200m", memory: "256Mi" }
+        realtime:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "200m", memory: "256Mi" }
+        auth:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "200m", memory: "256Mi" }
+        storage:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "200m", memory: "256Mi" }
+      replicas:
+        kong: 1
+        postgrest: 1
+        realtime: 1
+        auth: 1
+        storage: 1
+        dashboard: 1
+
+  small:
+    description: "Small production setup for low-traffic applications"
+    monthly_cost_estimate: "$150-250"
+    use_cases: ["small production", "staging", "demos"]
+    
+    eks:
+      cluster_version: "1.30"
+      endpoint_private_access: true
+      endpoint_public_access: true
+      node_groups:
+        - name: "small-general"
+          instance_types: ["t3.medium"]
+          capacity_type: "ON_DEMAND"
+          desired_size: 2
+          max_size: 4
+          min_size: 1
+          disk_size: 30
+        - name: "small-spot"
+          instance_types: ["t3.medium", "t3.large"]
+          capacity_type: "SPOT"
+          desired_size: 1
+          max_size: 3
+          min_size: 0
+          disk_size: 30
+    
+    rds:
+      instance_class: "db.t3.small"
+      allocated_storage: 50
+      max_allocated_storage: 500
+      engine_version: "15.8"
+      multi_az: false
+      backup_retention_period: 3
+      deletion_protection: true
+      performance_insights_enabled: true
+      monitoring_interval: 0
+    
+    s3:
+      versioning_enabled: true
+      force_destroy: false
+      enable_access_logging: true
+    
+    supabase:
+      image_tag: "latest"
+      enable_hpa: true
+      resources:
+        kong:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+        postgrest:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+        realtime:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+        auth:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "300m", memory: "384Mi" }
+        storage:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "300m", memory: "384Mi" }
+      replicas:
+        kong: 2
+        postgrest: 2
+        realtime: 2
+        auth: 2
+        storage: 2
+        dashboard: 1
+      hpa:
+        postgrest: { min: 2, max: 5, cpu_target: 70 }
+        realtime: { min: 2, max: 4, cpu_target: 70 }
+        auth: { min: 2, max: 4, cpu_target: 70 }
+        storage: { min: 2, max: 4, cpu_target: 70 }
+
+  medium:
+    description: "Medium production setup for moderate traffic"
+    monthly_cost_estimate: "$300-500"
+    use_cases: ["medium production", "business applications"]
+    
+    eks:
+      cluster_version: "1.30"
+      endpoint_private_access: true
+      endpoint_public_access: true
+      node_groups:
+        - name: "medium-general"
+          instance_types: ["t3.large"]
+          capacity_type: "ON_DEMAND"
+          desired_size: 2
+          max_size: 6
+          min_size: 2
+          disk_size: 50
+        - name: "medium-spot"
+          instance_types: ["t3.large", "m5.large", "m5a.large"]
+          capacity_type: "SPOT"
+          desired_size: 2
+          max_size: 8
+          min_size: 0
+          disk_size: 50
+    
+    rds:
+      instance_class: "db.t3.medium"
+      allocated_storage: 100
+      max_allocated_storage: 1000
+      engine_version: "15.8"
+      multi_az: true
+      backup_retention_period: 7
+      deletion_protection: true
+      performance_insights_enabled: true
+      monitoring_interval: 60
+    
+    s3:
+      versioning_enabled: true
+      force_destroy: false
+      enable_access_logging: true
+    
+    supabase:
+      image_tag: "latest"
+      enable_hpa: true
+      resources:
+        kong:
+          requests: { cpu: "200m", memory: "512Mi" }
+          limits: { cpu: "1000m", memory: "1Gi" }
+        postgrest:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "1000m", memory: "1Gi" }
+        realtime:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "1000m", memory: "1Gi" }
+        auth:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+        storage:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+      replicas:
+        kong: 2
+        postgrest: 2
+        realtime: 2
+        auth: 2
+        storage: 2
+        dashboard: 1
+      hpa:
+        postgrest: { min: 2, max: 10, cpu_target: 70 }
+        realtime: { min: 2, max: 5, cpu_target: 70 }
+        auth: { min: 2, max: 5, cpu_target: 70 }
+        storage: { min: 2, max: 5, cpu_target: 70 }
+
+  large:
+    description: "Large production setup for high traffic"
+    monthly_cost_estimate: "$800-1200"
+    use_cases: ["large production", "enterprise applications"]
+    
+    eks:
+      cluster_version: "1.30"
+      endpoint_private_access: true
+      endpoint_public_access: false
+      node_groups:
+        - name: "large-general"
+          instance_types: ["m5.large", "m5.xlarge"]
+          capacity_type: "ON_DEMAND"
+          desired_size: 3
+          max_size: 10
+          min_size: 3
+          disk_size: 100
+        - name: "large-spot"
+          instance_types: ["m5.large", "m5.xlarge", "m5a.large", "m5a.xlarge"]
+          capacity_type: "SPOT"
+          desired_size: 3
+          max_size: 20
+          min_size: 0
+          disk_size: 100
+    
+    rds:
+      instance_class: "db.r6g.large"
+      allocated_storage: 500
+      max_allocated_storage: 5000
+      engine_version: "15.8"
+      multi_az: true
+      backup_retention_period: 14
+      deletion_protection: true
+      performance_insights_enabled: true
+      monitoring_interval: 15
+    
+    s3:
+      versioning_enabled: true
+      force_destroy: false
+      enable_access_logging: true
+    
+    supabase:
+      image_tag: "latest"
+      enable_hpa: true
+      resources:
+        kong:
+          requests: { cpu: "500m", memory: "1Gi" }
+          limits: { cpu: "2000m", memory: "2Gi" }
+        postgrest:
+          requests: { cpu: "200m", memory: "512Mi" }
+          limits: { cpu: "2000m", memory: "2Gi" }
+        realtime:
+          requests: { cpu: "200m", memory: "512Mi" }
+          limits: { cpu: "2000m", memory: "2Gi" }
+        auth:
+          requests: { cpu: "200m", memory: "512Mi" }
+          limits: { cpu: "1000m", memory: "1Gi" }
+        storage:
+          requests: { cpu: "200m", memory: "512Mi" }
+          limits: { cpu: "1000m", memory: "1Gi" }
+      replicas:
+        kong: 3
+        postgrest: 3
+        realtime: 3
+        auth: 3
+        storage: 3
+        dashboard: 2
+      hpa:
+        postgrest: { min: 3, max: 20, cpu_target: 60 }
+        realtime: { min: 3, max: 10, cpu_target: 60 }
+        auth: { min: 3, max: 10, cpu_target: 60 }
+        storage: { min: 3, max: 10, cpu_target: 60 }
+
+  xlarge:
+    description: "Extra large setup for enterprise scale"
+    monthly_cost_estimate: "$2000+"
+    use_cases: ["enterprise production", "high-scale applications"]
+    
+    eks:
+      cluster_version: "1.30"
+      endpoint_private_access: true
+      endpoint_public_access: false
+      node_groups:
+        - name: "xlarge-general"
+          instance_types: ["m5.xlarge", "m5.2xlarge"]
+          capacity_type: "ON_DEMAND"
+          desired_size: 5
+          max_size: 20
+          min_size: 5
+          disk_size: 200
+        - name: "xlarge-spot"
+          instance_types: ["m5.xlarge", "m5.2xlarge", "m5a.xlarge", "m5a.2xlarge"]
+          capacity_type: "SPOT"
+          desired_size: 5
+          max_size: 50
+          min_size: 0
+          disk_size: 200
+    
+    rds:
+      instance_class: "db.r6g.xlarge"
+      allocated_storage: 1000
+      max_allocated_storage: 10000
+      engine_version: "15.8"
+      multi_az: true
+      backup_retention_period: 30
+      deletion_protection: true
+      performance_insights_enabled: true
+      monitoring_interval: 15
+    
+    s3:
+      versioning_enabled: true
+      force_destroy: false
+      enable_access_logging: true
+    
+    supabase:
+      image_tag: "latest"
+      enable_hpa: true
+      resources:
+        kong:
+          requests: { cpu: "1000m", memory: "2Gi" }
+          limits: { cpu: "4000m", memory: "4Gi" }
+        postgrest:
+          requests: { cpu: "500m", memory: "1Gi" }
+          limits: { cpu: "4000m", memory: "4Gi" }
+        realtime:
+          requests: { cpu: "500m", memory: "1Gi" }
+          limits: { cpu: "4000m", memory: "4Gi" }
+        auth:
+          requests: { cpu: "300m", memory: "768Mi" }
+          limits: { cpu: "2000m", memory: "2Gi" }
+        storage:
+          requests: { cpu: "300m", memory: "768Mi" }
+          limits: { cpu: "2000m", memory: "2Gi" }
+      replicas:
+        kong: 5
+        postgrest: 5
+        realtime: 5
+        auth: 5
+        storage: 5
+        dashboard: 3
+      hpa:
+        postgrest: { min: 5, max: 50, cpu_target: 50 }
+        realtime: { min: 5, max: 20, cpu_target: 50 }
+        auth: { min: 5, max: 20, cpu_target: 50 }
+        storage: { min: 5, max: 20, cpu_target: 50 }

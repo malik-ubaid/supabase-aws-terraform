@@ -1,0 +1,9 @@
+{{- if .Values.namespaceCreate -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace | default "supabase" }}
+  labels:
+    {{- include "supabase.labels" . | nindent 4 }}
+    name: {{ .Values.namespace | default "supabase" }}
+{{- end }}

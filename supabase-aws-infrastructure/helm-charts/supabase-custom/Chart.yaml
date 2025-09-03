@@ -1,0 +1,20 @@
+apiVersion: v2
+name: supabase
+description: A Helm chart for Supabase on Kubernetes with AWS integration
+type: application
+version: 0.1.0
+appVersion: "latest"
+home: https://supabase.com
+sources:
+  - https://github.com/supabase/supabase
+  - https://github.com/supabase/supabase-kubernetes
+maintainers:
+  - name: Platform Team
+    email: platform@example.com
+keywords:
+  - supabase
+  - postgres
+  - realtime
+  - auth
+  - storage
+  - api

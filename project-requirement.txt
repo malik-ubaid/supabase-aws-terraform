@@ -1,0 +1,91 @@
+## Scenario
+
+Your organization is expanding its cloud presence and needs to deploy critical open-source applications like [Supabase](https://supabase.com/) to a chosen cloud provider. You are tasked with creating a highly automated, secure, and scalable solution that demonstrates best practices in cloud infrastructure, container orchestration, and deployment. The primary goal is to provide a consistent, code-driven deployment experience for Supabase on a managed Kubernetes service in your chosen cloud environment.
+
+## 1. Application: Supabase
+
+You will be deploying the [Supabase](https://github.com/supabase/supabase) stack to Kubernetes. Refer to the provided community examples for guidance on the specific components and their configurations.
+
+## 2. Infrastructure as Code (IaC) - Code-Based First
+
+Your infrastructure must be defined entirely as code, with a strong preference for code-based IaC frameworks.
+
+- Cloud Provider: Choose one—AWS or Azure.
+- Framework: CDK for Terraform (CDKTF) in Python is the preferred choice. However, you may optionally use alternative code-based IaC tools for Kubernetes, such as cdk8s or Pulumi, where appropriate. Please justify your choice if not using `cdktf`
+
+**Components to Provision (for your chosen cloud):**
+
+- Network: A secure and isolated virtual network (e.g., VPC in AWS, VNet in Azure) with public/private subnets, NAT Gateways/Firewalls, and appropriate routing.
+- Kubernetes: A managed Kubernetes Service (e.g., Amazon EKS for AWS, Azure Kubernetes Service (AKS) for Azure) deployed into private subnets, spanning at least two availability zones/regions for high availability.
+- Managed Database: A managed PostgreSQL service (e.g., Amazon RDS for PostgreSQL for AWS, Azure Database for PostgreSQL for Azure) in private subnets, configured for high availability and backups.
+- Object Storage: Cloud object storage (e.g., Amazon S3 for AWS, Azure Blob Storage for Azure) for Supabase.
+- Secrets Management: A dedicated secrets management service (e.g., AWS Secrets Manager for AWS, Azure Key Vault for Azure) for storing sensitive Supabase configurations (e.g., JWT secret, PostgreSQL credentials, API keys, etc.).
+
+**Security in IaC:**
+
+- Implement network access controls (e.g., security groups, Network Security Groups) to restrict traffic.
+- Apply IAM roles/Service Principals with least privilege for IaC deployment and Kubernetes operations.
+- Enable Kubernetes NetworkPolicies to restrict traffic between Supabase pods (optional but highly recommended).
+
+**IaC Structure:**
+
+- The IaC code should be modular, well-commented, and follow best practices (e.g., using constructs, components, variables, outputs).
+- You will use provided template repos (e.g., [supabase-terraform](https://github.com/supabase-community/supabase-terraform), [supabase-kubernetes](https://github.com/supabase-community/supabase-kubernetes), [supabase-on-aws](https://github.com/supabase-community/supabase-on-aws)) only as references for architectural patterns and configurations. Do not fork or modify them directly for your solution. Create your own infrastructure code from scratch.
+
+## 3. Supabase Deployment (Kubernetes & Helm)
+
+- Helm Chart: Use the [supabase-kubernetes](https://github.com/supabase-community/supabase-kubernetes) chart as a blueprint. You will need to customize its values.
+- Custom Helm Values:
+    - Reference secrets from your cloud-specific secrets vault instead of hardcoding them. You should demonstrate a mechanism for Kubernetes to consume these secrets (e.g., using External Secrets Operator, CSI driver, or a similar secure method).
+    - Configure persistence (PVC sizes) and resource requests/limits for Supabase components.
+    - Enable Horizontal Pod Autoscaler (HPA) on key components (e.g., postgrest, realtime).
+    - Configure PostgreSQL persistence and backups within the Supabase deployment context.
+- Ingress: Implement Ingress controllers (e.g., NGINX Ingress, cloud-provider specific Ingress controllers like AWS ALB Ingress Controller, Azure Application Gateway Ingress Controller) to expose Supabase services securely.
+
+## 4. Deployment Instructions (Command Line)
+
+Provide clear, step-by-step instructions in your README.md on how to deploy the Supabase stack using command-line tools. This should cover:
+
+1. Infrastructure Provisioning:
+- `cdktf synth` & `cdktf deploy` for your chosen cloud environment. This step should be idempotent.
+1. Application Deployment:
+- Authenticate to your chosen Kubernetes cluster via the respective cloud CLI.
+- `helm upgrade --install` your Supabase release with overrides for your chosen cluster.
+1. Smoke Test:
+- Perform an HTTP check against the Supabase REST endpoint (/rest/v1) to ensure a 200 response for your deployed instance.
+
+## 5. Observability & Autoscaling
+
+- Observability: Your deployment should have observability in mind. Discuss how you would approach monitoring and logging for the Supabase stack in your chosen cloud environment. It is not required to provide a full dashboard setup or detailed logging agents, but rather demonstrate an understanding of how to achieve observability It’s NOT required to provide a full monitoring/observability solution but keep it in mind in your implementation
+- Autoscaling:
+    - HPA based on CPU/memory for key Supabase components (e.g., postgrest, realtime pods).
+    - Cluster Autoscaler for your chosen Kubernetes service (e.g., EKS, AKS).
+
+## 6. Documentation
+
+Include a comprehensive README.md at the root of your repository, detailing:
+
+1. Architecture Overview: High-level diagrams for your chosen cloud deployment, showing key components and their interactions. *(You can use  https://www.eraser.io/diagramgpt)*
+2. Technology Choices Justification: Explain why you chose specific tools.
+3. Prerequisites & Setup Instructions
+4. Deployment Instructions
+5. Verification: How to verify the deployment:
+- Endpoint URL(s) for your Supabase instance.
+- Commands to view logs, metrics, and rotate secrets.
+1. Tear-down Instructions: Clear steps to completely destroy all provisioned cloud resources to avoid ongoing costs.
+2. Security & Scalability Deep Dive: Elaborate on how you addressed secrets management, least privilege, network security, and scalability considerations.
+3. Challenges & Learnings: Document any significant challenges encountered or areas where you made trade-offs.
+4. Future Improvements: Suggest potential next steps or enhancements.
+
+## 7. Deliverables & Timeline
+
+- GitHub Repository with your implementation.
+- Time Expectation: This task is designed to be highly challenging and will likely take 2-3 days. It is understood that achieving 100% perfection on every single detail might be difficult within this timeframe. The primary goal is to demonstrate your approach, problem-solving skills, architectural thinking, and ability to integrate complex systems across diverse technologies and a single cloud provider using code-based IaC. Focus on getting the core Supabase functionality working with automated deployments and secure secrets management.
+
+## 8. Resources
+
+These resources are provided as architectural guides and examples. Do not fork or modify them directly for your solution. Instead, model your CDKTF code and Helm values after their patterns, and leverage the community examples for specific service implementations.
+
+- **Supabase-Terraform**: [https://github.com/supabase-community/supabase-terraform](https://github.com/supabase-community/supabase-terraformhttps://github.com/supabase-community/supabase-terraform)
+- **Supabase-Kubernetes**: https://github.com/supabase-community/supabase-kubernetes
+- **Supabase on AWS**: https://github.com/supabase-community/supabase-on-aws
