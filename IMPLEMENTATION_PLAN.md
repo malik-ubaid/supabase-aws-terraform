@@ -12,6 +12,10 @@ This project implements a production-ready, secure, and scalable deployment of [
 - **Maintainability**: Modular, reusable Terraform code following proven patterns
 - **Observability**: Built-in monitoring and logging capabilities
 
+### Architecture Diagram
+- **Architecture Diagram**: [Architecture Diagram](https://drive.google.com/file/d/1R1-EXfipFFybK2vmXCDeMppdKgj7mGSS/view?usp=sharing)
+
+
 ## 📋 Requirements Analysis
 
 Based on the project requirements, this solution addresses:
@@ -615,22 +619,6 @@ resource "aws_eks_cluster" "main" {
 }
 ```
 
-### Monitoring Stack Ready
-- **Metrics**: Prometheus + Grafana via Helm
-- **Logging**: Fluent Bit → CloudWatch Logs
-- **Tracing**: X-Ray integration for request tracing
-- **Alerting**: CloudWatch Alarms + SNS notifications
-
-### Key Metrics to Monitor
-```yaml
-supabase_metrics:
-  - postgrest_request_duration
-  - realtime_connection_count
-  - auth_requests_per_second
-  - storage_operations_count
-  - database_connection_pool_usage
-```
-
 ## 🛡️ Security Deep Dive
 
 ### Network Security Layers
@@ -661,61 +649,6 @@ resource "aws_secretsmanager_secret_rotation" "rds_rotation" {
   }
 }
 ```
-
-### IAM Policy Example
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue"
-      ],
-      "Resource": "arn:aws:secretsmanager:eu-west-1:*:secret:supabase/*"
-    },
-    {
-      "Effect": "Allow", 
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": "arn:aws:s3:::supabase-storage-bucket/*"
-    }
-  ]
-}
-```
-
-## 🔄 CI/CD Integration
-
-### GitOps Workflow
-```yaml
-# Example GitHub Actions workflow
-name: Deploy Supabase Infrastructure
-on:
-  push:
-    branches: [main]
-    paths: ['environments/**', 'modules/**']
-
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-      
-      - name: Terraform Plan
-        run: |
-          cd environments/ireland/development/networking
-          terraform plan -out=tfplan
-          
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply tfplan
-```
-
-## 📋 Quality Assurance
 
 ### Testing Strategy
 1. **Infrastructure Tests**: Terraform plan validation
@@ -756,82 +689,6 @@ enable_auth = true
 enable_storage = true
 enable_realtime = true
 ```
-
-## 🔧 Operational Procedures
-
-### Day 1 Operations
-- **Monitoring**: Set up CloudWatch dashboards
-- **Alerting**: Configure critical alerts (API down, DB connections)
-- **Backup Verification**: Ensure RDS and S3 backups are working
-- **Access Review**: Verify IAM permissions are minimal
-
-### Maintenance Windows
-- **Database**: Sunday 04:00-05:00 UTC
-- **Kubernetes**: Rolling updates during business hours
-- **Security Updates**: Automated patch management for nodes
-
-### Disaster Recovery
-- **RDS**: Cross-AZ failover < 2 minutes
-- **EKS**: Multi-AZ node distribution
-- **Backups**: Point-in-time recovery up to 7 days
-- **Secrets**: Cross-region replication enabled
-
-## 📚 Documentation Structure
-
-### Technical Documentation
-1. **README.md**: Quick start and overview
-2. **ARCHITECTURE.md**: Detailed architecture decisions
-3. **DEPLOYMENT.md**: Step-by-step deployment guide
-4. **OPERATIONS.md**: Day-2 operations procedures
-5. **TROUBLESHOOTING.md**: Common issues and solutions
-
-### API Documentation
-- Supabase API endpoints and authentication
-- Custom extension documentation
-- Client SDK integration examples
-
-## 🚦 Success Criteria
-
-### Technical Validation
-- [ ] Infrastructure deploys successfully via Terraform
-- [ ] EKS cluster is accessible and healthy
-- [ ] Supabase API responds with 200 status
-- [ ] Database connectivity from Supabase components
-- [ ] External secrets integration working
-- [ ] Auto-scaling triggers appropriately
-
-### Security Validation
-- [ ] No public database endpoints
-- [ ] Secrets not hardcoded in any configuration
-- [ ] Network traffic flows through intended paths
-- [ ] IAM roles follow least privilege principle
-- [ ] Encryption at rest and in transit verified
-
-### Performance Validation
-- [ ] API response times < 200ms for simple queries
-- [ ] Database connections pool efficiently
-- [ ] File uploads work through S3 integration
-- [ ] Real-time subscriptions function correctly
-
-## 🔮 Future Enhancements
-
-### Short-term (Next Sprint)
-- Multi-region deployment for disaster recovery
-- Custom domain and SSL certificate automation
-- Enhanced monitoring with Grafana dashboards
-- Cost optimization with spot instance scaling
-
-### Medium-term (Next Quarter)
-- Blue-green deployment strategy
-- Advanced security scanning integration
-- Performance testing automation
-- Compliance reporting (SOC2, ISO27001)
-
-### Long-term (Next 6 Months)
-- Multi-cloud deployment capability
-- Advanced data analytics integration
-- AI/ML workload support
-- Global content delivery optimization
 
 ---
 
