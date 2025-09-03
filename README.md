@@ -7,6 +7,9 @@
 
 Enterprise-grade Infrastructure as Code for deploying [Supabase](https://supabase.com/) on AWS using Terraform, EKS, and cloud-native services.
 
+### Architecture Diagram
+- **Architecture Diagram**: [Architecture Diagram](https://drive.google.com/file/d/1R1-EXfipFFybK2vmXCDeMppdKgj7mGSS/view?usp=sharing)
+
 ## 🏗️ Architecture Overview
 
 ```

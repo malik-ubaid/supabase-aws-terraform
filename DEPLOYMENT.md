@@ -2,6 +2,9 @@
 
 This guide provides step-by-step instructions for deploying the complete Supabase infrastructure on AWS using Terraform modules and Kubernetes with Helm.
 
+### Architecture Diagram
+- **Architecture Diagram**: [Architecture Diagram](https://drive.google.com/file/d/1R1-EXfipFFybK2vmXCDeMppdKgj7mGSS/view?usp=sharing)
+
 ## 🎯 What You'll Deploy
 
 This deployment creates a production-ready Supabase environment with:
