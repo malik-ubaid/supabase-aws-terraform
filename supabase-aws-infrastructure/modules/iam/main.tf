@@ -27,6 +27,7 @@ locals {
 }
 
 resource "aws_iam_role" "eks_cluster" {
+  count = var.create_cluster_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-eks-cluster-role"
 
   assume_role_policy = jsonencode({
@@ -48,11 +49,13 @@ resource "aws_iam_role" "eks_cluster" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  count      = var.create_cluster_roles ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks_cluster.name
+  role       = aws_iam_role.eks_cluster[0].name
 }
 
 resource "aws_iam_role" "eks_nodegroup" {
+  count = var.create_cluster_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-eks-nodegroup-role"
 
   assume_role_policy = jsonencode({
@@ -74,26 +77,31 @@ resource "aws_iam_role" "eks_nodegroup" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_nodegroup_policy" {
+  count      = var.create_cluster_roles ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.eks_nodegroup.name
+  role       = aws_iam_role.eks_nodegroup[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
+  count      = var.create_cluster_roles ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.eks_nodegroup.name
+  role       = aws_iam_role.eks_nodegroup[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "eks_container_registry_policy" {
+  count      = var.create_cluster_roles ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.eks_nodegroup.name
+  role       = aws_iam_role.eks_nodegroup[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "eks_ssm_policy" {
+  count      = var.create_cluster_roles ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  role       = aws_iam_role.eks_nodegroup.name
+  role       = aws_iam_role.eks_nodegroup[0].name
 }
 
 resource "aws_iam_role" "ebs_csi_driver" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-ebs-csi-driver-role"
 
   assume_role_policy = jsonencode({
@@ -121,11 +129,13 @@ resource "aws_iam_role" "ebs_csi_driver" {
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver_policy" {
+  count      = var.create_service_account_roles ? 1 : 0
   policy_arn = "arn:${local.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.ebs_csi_driver.name
+  role       = aws_iam_role.ebs_csi_driver[0].name
 }
 
 resource "aws_iam_role" "cluster_autoscaler" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-cluster-autoscaler-role"
 
   assume_role_policy = jsonencode({
@@ -153,8 +163,9 @@ resource "aws_iam_role" "cluster_autoscaler" {
 }
 
 resource "aws_iam_role_policy" "cluster_autoscaler" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-cluster-autoscaler-policy"
-  role = aws_iam_role.cluster_autoscaler.id
+  role = aws_iam_role.cluster_autoscaler[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -180,6 +191,7 @@ resource "aws_iam_role_policy" "cluster_autoscaler" {
 }
 
 resource "aws_iam_role" "aws_load_balancer_controller" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-aws-load-balancer-controller-role"
 
   assume_role_policy = jsonencode({
@@ -385,6 +397,7 @@ data "aws_iam_policy_document" "aws_load_balancer_controller" {
 }
 
 resource "aws_iam_policy" "aws_load_balancer_controller" {
+  count  = var.create_service_account_roles ? 1 : 0
   name   = "${var.project_name}-${var.environment}-aws-load-balancer-controller-policy"
   policy = data.aws_iam_policy_document.aws_load_balancer_controller.json
 
@@ -392,11 +405,13 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
 }
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
-  policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
-  role       = aws_iam_role.aws_load_balancer_controller.name
+  count      = var.create_service_account_roles ? 1 : 0
+  policy_arn = aws_iam_policy.aws_load_balancer_controller[0].arn
+  role       = aws_iam_role.aws_load_balancer_controller[0].name
 }
 
 resource "aws_iam_role" "external_secrets" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-external-secrets-role"
 
   assume_role_policy = jsonencode({
@@ -424,6 +439,7 @@ resource "aws_iam_role" "external_secrets" {
 }
 
 resource "aws_iam_policy" "external_secrets" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-external-secrets-policy"
 
   policy = jsonencode({
@@ -455,11 +471,13 @@ resource "aws_iam_policy" "external_secrets" {
 }
 
 resource "aws_iam_role_policy_attachment" "external_secrets" {
-  policy_arn = aws_iam_policy.external_secrets.arn
-  role       = aws_iam_role.external_secrets.name
+  count      = var.create_service_account_roles ? 1 : 0
+  policy_arn = aws_iam_policy.external_secrets[0].arn
+  role       = aws_iam_role.external_secrets[0].name
 }
 
 resource "aws_iam_role" "supabase_storage" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-storage-role"
 
   assume_role_policy = jsonencode({
@@ -487,6 +505,7 @@ resource "aws_iam_role" "supabase_storage" {
 }
 
 resource "aws_iam_policy" "supabase_storage" {
+  count = var.create_service_account_roles ? 1 : 0
   name = "${var.project_name}-${var.environment}-storage-policy"
 
   policy = jsonencode({
@@ -520,6 +539,7 @@ resource "aws_iam_policy" "supabase_storage" {
 }
 
 resource "aws_iam_role_policy_attachment" "supabase_storage" {
-  policy_arn = aws_iam_policy.supabase_storage.arn
-  role       = aws_iam_role.supabase_storage.name
+  count      = var.create_service_account_roles ? 1 : 0
+  policy_arn = aws_iam_policy.supabase_storage[0].arn
+  role       = aws_iam_role.supabase_storage[0].name
 }

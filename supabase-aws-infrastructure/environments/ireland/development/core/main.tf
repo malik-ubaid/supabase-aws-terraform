@@ -7,11 +7,27 @@ module "iam" {
   environment    = var.environment
   region         = var.region
   cluster_name   = local.cluster_name
+
+  tags = {
+    Owner = "Platform Team"
+  }
+}
+
+module "iam_service_accounts" {
+  source = "../../../../modules/iam"
+
+  project_name   = var.project_name
+  environment    = var.environment
+  region         = var.region
+  cluster_name   = local.cluster_name
   
   oidc_provider_arn = module.eks.oidc_provider_arn
   oidc_provider_url = module.eks.oidc_provider_url
   s3_bucket_arn     = module.s3.bucket_arn
   secrets_manager_arns = module.secrets.all_secrets_arns
+  
+  create_cluster_roles = false
+  create_service_account_roles = true
 
   tags = {
     Owner = "Platform Team"
@@ -82,9 +98,9 @@ module "eks" {
   
   eks_cluster_role_arn               = module.iam.eks_cluster_role_arn
   eks_nodegroup_role_arn            = module.iam.eks_nodegroup_role_arn
-  ebs_csi_driver_role_arn           = module.iam.ebs_csi_driver_role_arn
-  cluster_autoscaler_role_arn       = module.iam.cluster_autoscaler_role_arn
-  aws_load_balancer_controller_role_arn = module.iam.aws_load_balancer_controller_role_arn
+  ebs_csi_driver_role_arn           = module.iam_service_accounts.ebs_csi_driver_role_arn
+  cluster_autoscaler_role_arn       = module.iam_service_accounts.cluster_autoscaler_role_arn
+  aws_load_balancer_controller_role_arn = module.iam_service_accounts.aws_load_balancer_controller_role_arn
   
   node_groups                       = local.tier_node_groups
   ec2_ssh_key                      = var.ec2_ssh_key

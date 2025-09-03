@@ -49,3 +49,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "create_cluster_roles" {
+  description = "Whether to create cluster-level IAM roles (EKS cluster, node group)"
+  type        = bool
+  default     = true
+}
+
+variable "create_service_account_roles" {
+  description = "Whether to create service account IAM roles (requires OIDC provider)"
+  type        = bool
+  default     = true
+}
