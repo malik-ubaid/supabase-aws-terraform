@@ -410,5 +410,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Discussions**: Join community discussions for questions and ideas
 
 ---
-
-**Built with ❤️ for the Supabase and AWS community**
