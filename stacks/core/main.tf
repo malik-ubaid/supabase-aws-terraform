@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 module "iam" {
-  source = "../../../../modules/iam"
+  source = "../../modules/iam"
 
   project_name   = var.project_name
   environment    = var.environment
@@ -14,7 +14,7 @@ module "iam" {
 }
 
 module "iam_service_accounts" {
-  source = "../../../../modules/iam"
+  source = "../../modules/iam"
 
   project_name   = var.project_name
   environment    = var.environment
@@ -37,7 +37,7 @@ module "iam_service_accounts" {
 }
 
 module "s3" {
-  source = "../../../../modules/s3"
+  source = "../../modules/s3"
 
   project_name = var.project_name
   environment  = var.environment
@@ -59,7 +59,7 @@ module "s3" {
 }
 
 module "secrets" {
-  source = "../../../../modules/secrets"
+  source = "../../modules/secrets"
 
   project_name = var.project_name
   environment  = var.environment
@@ -85,7 +85,7 @@ module "secrets" {
 }
 
 module "eks" {
-  source = "../../../../modules/eks"
+  source = "../../modules/eks"
 
   cluster_name    = local.cluster_name
   cluster_version = local.current_tier.eks.cluster_version
@@ -123,7 +123,7 @@ module "eks" {
 # Temporarily disabled due to count argument issues
 # Will be re-enabled after core infrastructure is deployed
 # module "eks_addons" {
-#   source = "../../../../modules/eks-addons"
+#   source = "../../modules/eks-addons"
 #
 #   cluster_name    = local.cluster_name
 #   cluster_version = local.current_tier.eks.cluster_version
@@ -225,7 +225,7 @@ resource "aws_eks_fargate_profile" "supabase" {
 }
 
 module "rds" {
-  source = "../../../../modules/rds"
+  source = "../../modules/rds"
 
   project_name = var.project_name
   environment  = var.environment

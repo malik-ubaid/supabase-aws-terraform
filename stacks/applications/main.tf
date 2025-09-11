@@ -1,5 +1,5 @@
 module "supabase" {
-  source = "../../../../modules/supabase"
+  source = "../../modules/supabase"
 
   project_name = var.project_name
   environment  = var.environment

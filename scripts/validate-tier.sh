@@ -24,10 +24,13 @@ function validate_tier() {
 import yaml
 with open('$PROJECT_ROOT/service-tiers.yaml', 'r') as f:
     data = yaml.safe_load(f)
-    tier = data['tiers']['$SERVICE_TIER']
-    print(f\"Description: {tier['description']}\")
-    print(f\"Monthly Cost: {tier['monthly_cost_estimate']}\")
-    print(f\"Use Cases: {', '.join(tier['use_cases'])}\")
+    if '$SERVICE_TIER' in data['tiers']:
+        tier = data['tiers']['$SERVICE_TIER']
+        print('Description: ' + tier['description'])
+        print('Monthly Cost: ' + tier['monthly_cost_estimate'])
+        print('Use Cases: ' + ', '.join(tier['use_cases']))
+    else:
+        print('null')
 ")
     fi
     

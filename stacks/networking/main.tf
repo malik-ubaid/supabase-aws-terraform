@@ -4,7 +4,7 @@ locals {
 }
 
 module "networking" {
-  source = "../../../../modules/networking"
+  source = "../../modules/networking"
 
   region         = var.region
   environment    = local.environment

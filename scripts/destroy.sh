@@ -27,7 +27,7 @@ fi
 function destroy_applications() {
     echo "🗑️ Destroying applications..."
     
-    cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/applications"
+    cd "$PROJECT_ROOT/stacks/applications"
     
     if [ -f "applications.tfplan" ]; then
         rm applications.tfplan
@@ -42,7 +42,7 @@ function destroy_applications() {
 function destroy_core() {
     echo "🗑️ Destroying core infrastructure..."
     
-    cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/core"
+    cd "$PROJECT_ROOT/stacks/core"
     
     if [ -f "core.tfplan" ]; then
         rm core.tfplan
@@ -57,7 +57,7 @@ function destroy_core() {
 function destroy_networking() {
     echo "🗑️ Destroying networking infrastructure..."
     
-    cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/networking"
+    cd "$PROJECT_ROOT/stacks/networking"
     
     if [ -f "networking.tfplan" ]; then
         rm networking.tfplan

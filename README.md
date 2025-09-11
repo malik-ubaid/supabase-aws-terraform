@@ -86,53 +86,81 @@ This project uses a **centralized service tier system** controlled by a single c
 ### One-Command Deployment
 
 ```bash
-# Clone and deploy with minimal tier (cost-optimized for testing)
+# Clone and deploy (automatically uses minimal tier for cost optimization)
 git clone <repository-url>
-cd supabase-aws-infrastructure
-./scripts/deploy.sh development eu-west-1
+cd supabase-aws-terraform
+./scripts/supabase-ops.sh deploy development eu-west-1
+```
+
+### Supabase Operations Script
+
+The `scripts/supabase-ops.sh` script provides a unified interface for all infrastructure operations:
+
+```bash
+# Deploy complete infrastructure
+./scripts/supabase-ops.sh deploy [environment] [region]
+
+# Check deployment status and dependencies
+./scripts/supabase-ops.sh status
+
+# Show deployment plan without applying
+./scripts/supabase-ops.sh plan
+
+# Destroy infrastructure (with confirmation)
+./scripts/supabase-ops.sh destroy
+
+# Destroy only applications (keep core infrastructure)
+./scripts/supabase-ops.sh destroy-apps
+
+# Destroy only core stack (WARNING: deletes database)
+./scripts/supabase-ops.sh destroy-core
+
+# Test deployment logic (dry-run)
+./scripts/supabase-ops.sh test-deploy
+
+# Show help
+./scripts/supabase-ops.sh help
 ```
 
 ### Manual Deployment (Step-by-Step)
 
-1. **Configure service tier**
-   ```bash
-   # Set tier in terraform.tfvars (minimal = lowest cost)
-   echo 'service_tier = "minimal"' > environments/ireland/development/core/terraform.tfvars
-   ```
+If you prefer granular control over the deployment process:
 
-2. **Deploy infrastructure**
+1. **Deploy infrastructure stacks**
    ```bash
-   # Deploy networking
-   cd environments/ireland/development/networking
+   # Deploy in dependency order: networking → core → applications
+   cd stacks/networking
    terraform init && terraform apply
 
-   # Deploy core (EKS, RDS, S3, Secrets)
    cd ../core  
    terraform init && terraform apply
 
-   # Configure kubectl
+   # Configure kubectl access
    aws eks update-kubeconfig --name supabase-development-eks --region eu-west-1
 
-   # Deploy Supabase
+   # Install External Secrets Operator
+   helm repo add external-secrets https://charts.external-secrets.io
+   helm install external-secrets external-secrets/external-secrets -n external-secrets-system --create-namespace
+
+   # Deploy Supabase applications
    cd ../applications
    terraform init && terraform apply
    ```
 
-3. **Verify deployment**
+2. **Verify deployment**
    ```bash
-   ./scripts/smoke-test.sh development supabase
+   ./scripts/supabase-ops.sh status
    ```
 
 ## 📁 Project Structure
 
 ```
-supabase-aws-infrastructure/
+supabase-aws-terraform/
 ├── service-tiers.yaml             # 🎛️ Centralized tier configurations
-├── environments/                  # Environment-specific configurations
-│   └── ireland/development/      # Ireland dev environment
-│       ├── networking/           # VPC, subnets, routing
-│       ├── core/                 # EKS, RDS, S3, Secrets
-│       └── applications/         # Supabase deployment
+├── stacks/                        # Terraform stacks (modular deployment)
+│   ├── networking/               # VPC, subnets, routing
+│   ├── core/                     # EKS, RDS, S3, Secrets
+│   └── applications/             # Supabase deployment
 ├── modules/                      # Reusable Terraform modules
 │   ├── networking/               # VPC and networking components
 │   ├── iam/                     # Identity and Access Management
@@ -144,11 +172,11 @@ supabase-aws-infrastructure/
 ├── helm-charts/                 # Custom Helm charts
 │   └── supabase-custom/         # Customized Supabase values
 ├── scripts/                     # Deployment and utility scripts
-│   ├── deploy.sh               # One-command deployment
-│   ├── destroy.sh              # Infrastructure cleanup
+│   ├── supabase-ops.sh         # 🚀 Main operations script
+│   ├── deploy.sh               # Legacy deployment script
+│   ├── destroy.sh              # Legacy cleanup script
 │   ├── validate-tier.sh        # Tier validation and info
-│   ├── change-tier.sh          # Change service tiers
-│   └── smoke-test.sh           # Deployment verification
+│   └── change-tier.sh          # Change service tiers
 ├── SERVICE_TIERS.md            # Service tier documentation
 ├── IMPLEMENTATION_PLAN.md      # Detailed implementation plan
 ├── DEPLOYMENT.md               # Step-by-step deployment guide
@@ -274,13 +302,45 @@ supabase:
 
 ## 🔄 Operational Procedures
 
+### Infrastructure Management
+
+**Check Infrastructure Status:**
+```bash
+# View complete deployment status
+./scripts/supabase-ops.sh status
+
+# Show deployment plan
+./scripts/supabase-ops.sh plan
+```
+
+**Deployment Operations:**
+```bash
+# Deploy complete infrastructure
+./scripts/supabase-ops.sh deploy development eu-west-1
+
+# Test deployment logic (dry-run)
+./scripts/supabase-ops.sh test-deploy
+```
+
+**Destruction Operations:**
+```bash
+# Destroy everything (requires confirmation)
+./scripts/supabase-ops.sh destroy
+
+# Destroy only applications (keeps core infrastructure)
+./scripts/supabase-ops.sh destroy-apps
+
+# Destroy only core (WARNING: deletes database)
+./scripts/supabase-ops.sh destroy-core
+```
+
 ### Scaling Operations
 
 **Scale EKS Nodes:**
 ```bash
 # Update node group desired capacity
 aws eks update-nodegroup-config \
-  --cluster-name supabase-dev-eks \
+  --cluster-name supabase-development-eks \
   --nodegroup-name supabase-nodes \
   --scaling-config desiredSize=5,maxSize=10,minSize=2
 ```
@@ -320,9 +380,12 @@ kubectl get secrets,configmaps -n supabase -o yaml > supabase-config-backup.yaml
 **EKS Cluster Access:**
 ```bash
 # Update kubeconfig
-aws eks update-kubeconfig --name supabase-dev-eks --region eu-west-1
+aws eks update-kubeconfig --name supabase-development-eks --region eu-west-1
 
-# Check cluster status
+# Check cluster status with operations script
+./scripts/supabase-ops.sh status
+
+# Manual cluster checks
 kubectl get nodes
 kubectl cluster-info
 ```

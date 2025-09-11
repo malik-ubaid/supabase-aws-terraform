@@ -67,7 +67,7 @@ tiers:
         dashboard: 1
 
   small:
-    description: "Small production setup for low-traffic applications"
+    description: "Small production setup for low-traffic applications - Custom node configuration"
     monthly_cost_estimate: "$150-250"
     use_cases: ["small production", "staging", "demos"]
     
@@ -77,31 +77,24 @@ tiers:
       endpoint_public_access: true
       node_groups:
         - name: "small-general"
-          instance_types: ["t3.medium"]
+          instance_types: ["t3.medium", "m5.large"]
           capacity_type: "ON_DEMAND"
           desired_size: 2
           max_size: 4
-          min_size: 1
-          disk_size: 30
-        - name: "small-spot"
-          instance_types: ["t3.medium", "t3.large"]
-          capacity_type: "SPOT"
-          desired_size: 1
-          max_size: 3
-          min_size: 0
-          disk_size: 30
+          min_size: 2
+          disk_size: 50
     
     rds:
-      instance_class: "db.t3.small"
-      allocated_storage: 50
-      max_allocated_storage: 500
-      storage_type: "gp2"
+      instance_class: "db.t3.medium"
+      allocated_storage: 100
+      max_allocated_storage: 1000
+      storage_type: "gp3"
       engine_version: "15.8"
-      multi_az: false
-      backup_retention_period: 3
+      multi_az: true
+      backup_retention_period: 7
       deletion_protection: true
       performance_insights_enabled: true
-      monitoring_interval: 0
+      monitoring_interval: 60
     
     s3:
       versioning_enabled: true

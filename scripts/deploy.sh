@@ -30,7 +30,7 @@ function check_prerequisites() {
 function deploy_networking() {
     echo "🌐 Deploying networking infrastructure..."
     
-    cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/networking"
+    cd "$PROJECT_ROOT/stacks/networking"
     
     terraform init
     terraform plan -out=networking.tfplan
@@ -42,7 +42,7 @@ function deploy_networking() {
 function deploy_core() {
     echo "🏗️ Deploying core infrastructure (EKS, RDS, S3, Secrets)..."
     
-    cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/core"
+    cd "$PROJECT_ROOT/stacks/core"
     
     terraform init
     terraform plan -out=core.tfplan
@@ -54,7 +54,7 @@ function deploy_core() {
 function configure_kubectl() {
     echo "⚙️ Configuring kubectl..."
     
-    CLUSTER_NAME=$(cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/core" && terraform output -raw cluster_name)
+    CLUSTER_NAME=$(cd "$PROJECT_ROOT/stacks/core" && terraform output -raw cluster_name)
     
     aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION"
     
@@ -64,7 +64,7 @@ function configure_kubectl() {
 function deploy_applications() {
     echo "📦 Deploying Supabase applications..."
     
-    cd "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/applications"
+    cd "$PROJECT_ROOT/stacks/applications"
     
     terraform init
     terraform plan -out=applications.tfplan
@@ -94,8 +94,8 @@ function verify_deployment() {
 function show_tier_info() {
     echo "💰 Checking service tier configuration..."
     
-    if [ -f "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/core/terraform.tfvars" ]; then
-        SERVICE_TIER=$(grep "service_tier" "$PROJECT_ROOT/environments/ireland/$ENVIRONMENT/core/terraform.tfvars" | cut -d '"' -f 2 || echo "minimal")
+    if [ -f "$PROJECT_ROOT/stacks/core/terraform.tfvars" ]; then
+        SERVICE_TIER=$(grep "service_tier" "$PROJECT_ROOT/stacks/core/terraform.tfvars" | cut -d '"' -f 2 2>/dev/null || echo "small")
         echo "📊 Current service tier: $SERVICE_TIER"
         
         # Show tier info

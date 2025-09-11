@@ -1,7 +1,7 @@
 # Load centralized service tier configuration
 locals {
   # Load service tier configurations from root
-  service_tiers = yamldecode(file("${path.root}/../../../../service-tiers.yaml"))
+  service_tiers = yamldecode(file("${path.root}/../../service-tiers.yaml"))
   
   # Get current tier configuration
   current_tier = local.service_tiers.tiers[var.service_tier]
